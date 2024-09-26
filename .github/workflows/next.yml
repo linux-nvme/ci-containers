@@ -42,7 +42,7 @@ jobs:
     name: build samurai and muon
     needs: build_staging
     container:
-      image: ghcr.io/linux-nvme/linux-nvme/debian.staging:next
+      image: ghcr.io/linux-nvme/debian.staging:next
     steps:
      - uses: actions/checkout@v4
      - name: build
