@@ -35,7 +35,7 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ghcr.io/linux-nvme/linux-nvme/${{ matrix.type }}.staging:main
+            ghcr.io/linux-nvme/${{ matrix.type }}.staging:main
 
   build_tools:
     runs-on: ubuntu-latest
@@ -92,8 +92,8 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ghcr.io/linux-nvme/linux-nvme/${{ matrix.type }}:${{ env.RELEASE_VERSION }}
-            ghcr.io/linux-nvme/linux-nvme/${{ matrix.type }}:latest
+            ghcr.io/linux-nvme/${{ matrix.type }}:${{ env.RELEASE_VERSION }}
+            ghcr.io/linux-nvme/${{ matrix.type }}:latest
 
   deploy_cross_containers:
     runs-on: ubuntu-latest
@@ -127,5 +127,5 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ghcr.io/linux-nvme/linux-nvme/ubuntu-cross-${{ matrix.arch }}:${{ env.RELEASE_VERSION }}
-            ghcr.io/linux-nvme/linux-nvme/ubuntu-cross-${{ matrix.arch }}:latest
+            ghcr.io/linux-nvme/ubuntu-cross-${{ matrix.arch }}:${{ env.RELEASE_VERSION }}
+            ghcr.io/linux-nvme/ubuntu-cross-${{ matrix.arch }}:latest
