@@ -1,0 +1,18 @@
+FROM ubuntu:jammy
+
+ARG TARGETPLATFORM
+ARG DEBIAN_FRONTEND=noninteractive
+ENV LANG=en_US.utf8
+RUN dpkg --add-architecture s390x && \
+    sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list && \
+    echo "deb [arch=s390x] http://ports.ubuntu.com/ jammy main universe restricted" > /etc/apt/sources.list.d/armhf.list && \
+    echo "deb [arch=s390x] http://ports.ubuntu.com/ jammy-updates main universe restricted" >> /etc/apt/sources.list.d/armhf.list && \
+    apt-get update && \
+    apt-get install -y locales && \
+    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
+    apt-get install --no-install-recommends -y \
+    meson pkg-config ca-certificates git qemu-user-static \
+    gcc-s390x-linux-gnu libc-dev:s390x libjson-c-dev:s390x \
+    xz-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

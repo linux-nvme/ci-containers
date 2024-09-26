@@ -1,0 +1,131 @@
+---
+name: "🚀 Release"
+
+on:
+  push:
+    tags:
+      - '*.*'
+
+jobs:
+  build_staging:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type:
+          - debian
+    name: debian staging build container
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.4.0
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image
+        uses: docker/build-push-action@v6.3.0
+        with:
+          file: staging/Dockerfile.${{ matrix.type }}.staging
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/igaw/linux-nvme/${{ matrix.type }}.staging:main
+
+  build_tools:
+    runs-on: ubuntu-latest
+    name: build samurai and muon
+    needs: build_staging
+    container:
+      image: ghcr.io/igaw/linux-nvme/debian.staging:main
+    steps:
+     - uses: actions/checkout@v4
+     - name: build
+       run: |
+         scripts/build-muon.sh
+     - uses: actions/upload-artifact@v4
+       name: Upload artifacts
+       with:
+         name: samu-muon
+         path: bin
+
+  deploy_debian_containers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type:
+          - debian
+          - debian.python
+    needs: build_tools
+    name: debian build containers
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Get release
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: samu-muon
+          path: bin
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.4.0
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image
+        uses: docker/build-push-action@v6.3.0
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.type }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/igaw/linux-nvme/${{ matrix.type }}:${{ env.RELEASE_VERSION }}
+            ghcr.io/igaw/linux-nvme/${{ matrix.type }}:latest
+
+  deploy_cross_containers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - armhf
+          - ppc64le
+          - s390x
+    name: ubuntu cross container
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Get release
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.4.0
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image
+        uses: docker/build-push-action@v6.3.0
+        with:
+          file: Dockerfile.ubuntu.${{ matrix.arch }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/igaw/linux-nvme/ubuntu-cross-${{ matrix.arch }}:${{ env.RELEASE_VERSION }}
+            ghcr.io/igaw/linux-nvme/ubuntu-cross-${{ matrix.arch }}:latest
