@@ -14,13 +14,13 @@ jobs:
         uses: snok/container-retention-policy@v2
         id: retention
         with:
-          image-names: linux-nvme*
+          image-names: *
           cut-off: One week ago UTC
           keep-at-least: 1
           timestamp-to-use: updated_at
           skip-tags: latest
           account-type: personal
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Output
         run: |-
