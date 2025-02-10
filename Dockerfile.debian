@@ -12,7 +12,7 @@ RUN apt-get update && \
     make meson/bookworm-backports gcc g++ clang pkg-config \
     libjson-c-dev libssl-dev libkeyutils-dev libdbus-1-dev swig xz-utils \
     ca-certificates git libcurl4 libarchive13 \
-    python3-sphinx asciidoc xmlto && \
+    python3-sphinx asciidoc xmlto curl && \
     apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
