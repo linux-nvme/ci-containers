@@ -28,7 +28,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
-        uses: docker/build-push-action@v6.7.0
+        uses: docker/build-push-action@v6.13.0
         with:
           file: staging/Dockerfile.${{ matrix.type }}.staging
           platforms: linux/amd64
@@ -84,7 +84,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
-        uses: docker/build-push-action@v6.7.0
+        uses: docker/build-push-action@v6.13.0
         with:
           context: .
           file: Dockerfile.${{ matrix.type }}
@@ -120,7 +120,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
-        uses: docker/build-push-action@v6.7.0
+        uses: docker/build-push-action@v6.13.0
         with:
           file: Dockerfile.ubuntu.${{ matrix.arch }}
           platforms: linux/amd64
