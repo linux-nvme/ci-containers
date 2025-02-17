@@ -4,7 +4,12 @@ name: "♻ Cleanup GHCR"
 on:
   schedule:
     - cron: "0 0 * * 0"  # At 00:00 on Sunday.
-
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: true
+        default: 'Manual trigger'
 jobs:
   clean-ghcr:
     name: cleanup images
