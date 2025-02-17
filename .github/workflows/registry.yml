@@ -19,7 +19,7 @@ jobs:
         uses: snok/container-retention-policy@v3.0.0
         id: retention
         with:
-          image-names: "*"
+          image-names: "debian debian.python debian.staging ubuntu-cross-s390x ubuntu-cross-ppc64le ubuntu-cross-armhf"
           cut-off: 1w
           keep-at-least: 1
           timestamp-to-use: updated_at
