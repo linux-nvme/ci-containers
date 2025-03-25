@@ -22,7 +22,7 @@ jobs:
           image-names: "debian debian.python debian.staging ubuntu-cross-s390x ubuntu-cross-ppc64le ubuntu-cross-armhf"
           cut-off: 1w
           timestamp-to-use: updated_at
-          image-tags: "!latest"
+          image-tags: "!latest !next !main"
           account: linux-nvme
           token: ${{ secrets.GITHUB_TOKEN }}
 
