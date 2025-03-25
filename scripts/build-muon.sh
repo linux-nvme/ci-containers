@@ -28,7 +28,6 @@ tools_build_muon() {
         -Dlibcurl=enabled                               \
         -Dlibarchive=enabled                            \
         -Dlibpkgconf=enabled                            \
-        -Ddocs=disabled                                 \
         -Dsamurai=disabled                              \
         "${BUILDDIR}/build-tools/.build-muon"
     meson compile -C "${BUILDDIR}/build-tools/.build-muon"
