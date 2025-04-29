@@ -27,7 +27,7 @@ tools_build_muon() {
         -Dprefix="${BUILDDIR}/build-tools"              \
         -Dlibcurl=enabled                               \
         -Dlibarchive=enabled                            \
-        -Dlibpkgconf=enabled                            \
+        -Dpkgconfig=auto                                \
         -Dsamurai=disabled                              \
         "${BUILDDIR}/build-tools/.build-muon"
     meson compile -C "${BUILDDIR}/build-tools/.build-muon"
