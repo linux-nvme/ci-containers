@@ -1,4 +1,4 @@
-FROM debian:bookworm-backports
+FROM debian:trixie-backports
 
 ARG TARGETPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive
@@ -8,8 +8,8 @@ RUN apt-get update && \
     apt-get install -y locales tzdata && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     apt-get install --no-install-recommends -y \
-    python3-distutils python3-openssl \
-    make meson/bookworm-backports gcc g++ clang pkg-config \
+    python3-setuptools python3-openssl \
+    make meson gcc g++ clang pkg-config \
     libjson-c-dev libssl-dev libkeyutils-dev libdbus-1-dev swig xz-utils \
     ca-certificates git libcurl4 libarchive13 \
     python3-sphinx asciidoc xmlto curl && \
