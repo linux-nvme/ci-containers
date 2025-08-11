@@ -27,7 +27,7 @@ tools_build_muon() {
         -Dprefix="${BUILDDIR}/build-tools"              \
         -Dlibcurl=enabled                               \
         -Dlibarchive=enabled                            \
-        -Dpkgconfig=auto                                \
+        -Dlibpkgconf=auto                               \
         -Dsamurai=disabled                              \
         -Dmeson-docs=disabled                           \
         -Dmeson-tests=disabled                          \
