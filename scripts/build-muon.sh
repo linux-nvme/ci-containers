@@ -3,6 +3,11 @@
 BUILDDIR="$(pwd)/.build"
 CC=${CC:-"gcc"}
 
+#muon_repo=https://git.sr.ht/~lattis/muon
+#muon_branch=master
+muon_repo=https://github.com/igaw/muon.git
+muon_branch=fix-ext-samurai
+
 tools_build_samurai() {
     mkdir -p "${BUILDDIR}"/build-tools
     git clone --depth 1 https://github.com/michaelforney/samurai.git \
@@ -19,7 +24,7 @@ tools_build_samurai() {
 
 tools_build_muon() {
     mkdir -p "${BUILDDIR}"/build-tools
-    git clone --depth 1 https://git.sr.ht/~lattis/muon \
+    git clone --depth 1 --branch "${muon_branch}" "${muon_repo}" \
         "${BUILDDIR}/build-tools/muon"
     pushd "${BUILDDIR}/build-tools/muon" || exit 1
 
