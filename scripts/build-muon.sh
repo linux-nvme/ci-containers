@@ -3,10 +3,11 @@
 BUILDDIR="$(pwd)/.build"
 CC=${CC:-"gcc"}
 
+# Don't DOS upstream repo
 #muon_repo=https://git.sr.ht/~lattis/muon
 #muon_branch=master
 muon_repo=https://github.com/igaw/muon.git
-muon_branch=fix-ext-samurai
+muon_branch=master
 
 tools_build_samurai() {
     mkdir -p "${BUILDDIR}"/build-tools
