@@ -1,0 +1,19 @@
+FROM {{ base_image }}
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV TZ=Europe/Berlin
+
+RUN zypper --non-interactive refresh && \
+    zypper --non-interactive install --no-recommends \
+        glibc-locale-base \
+        timezone && \
+    zypper --non-interactive install --no-recommends \
+{% for pkg in packages %}
+    {{ pkg }} \
+{% endfor %}
+    && zypper clean --all && \
+    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
+
+WORKDIR /build
