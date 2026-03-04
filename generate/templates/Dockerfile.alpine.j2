@@ -1,0 +1,16 @@
+FROM {{ base_image }}
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.utf8
+ENV TZ=Europe/Berlin
+
+RUN apk update && \
+    apk add musl-locales tzdata && \
+    apk add \
+{% for pkg in packages %}
+    {{ pkg }} \
+{% endfor %}
+    && apk cache clean && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
+WORKDIR /build

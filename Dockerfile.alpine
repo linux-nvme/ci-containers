@@ -1,0 +1,24 @@
+FROM alpine:latest
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.utf8
+ENV TZ=Europe/Berlin
+
+RUN apk update && \
+    apk add musl-locales tzdata && \
+    apk add \
+    git \
+    gcc \
+    meson \
+    bash \
+    linux-headers \
+    musl-dev \
+    perl \
+    python3 \
+    python3-dev \
+    py3-pip \
+    py3-virtualenv \
+    && apk cache clean && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
+WORKDIR /build
