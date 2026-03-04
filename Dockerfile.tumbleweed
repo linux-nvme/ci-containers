@@ -1,0 +1,28 @@
+FROM opensuse/tumbleweed:latest
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV TZ=Europe/Berlin
+
+RUN zypper --non-interactive refresh && \
+    zypper --non-interactive install --no-recommends \
+        glibc-locale-base \
+        timezone && \
+    zypper --non-interactive install --no-recommends \
+    clang \
+    gcc \
+    gcc-c++ \
+    git \
+    meson \
+    pkgconf-pkg-config \
+    swig \
+    valgrind \
+    python3 \
+    python3-devel \
+    python3-pip \
+    python3-virtualenv \
+    && zypper clean --all && \
+    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
+
+WORKDIR /build
