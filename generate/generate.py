@@ -47,7 +47,7 @@ def build_package_list(config, distro, bundle_list):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--distro", required=True,
-                        choices=["debian", "fedora", "tumbleweed"])
+                        choices=["debian", "fedora", "tumbleweed", "alpine"])
     parser.add_argument("--bundles", required=True,
                         help="Comma separated bundle list (e.g. base,python)")
     parser.add_argument("--output", default=None)

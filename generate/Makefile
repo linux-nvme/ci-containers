@@ -1,4 +1,4 @@
-DISTROS := debian fedora tumbleweed
+DISTROS := debian fedora tumbleweed alpine
 DOCKERFILES := $(addprefix ../Dockerfile.,$(DISTROS))
 BUILD_TARGETS := $(addprefix build-,$(DISTROS))
 
