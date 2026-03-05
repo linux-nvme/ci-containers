@@ -30,7 +30,7 @@ jobs:
       - distro_matrix
     strategy:
       matrix:
-        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
+        distro: ${{ fromJSON(needs.distro_matrix.outputs.distros) }}
     name: Build staging container
     steps:
       - name: Check out repo
@@ -68,7 +68,7 @@ jobs:
       - build_staging
     strategy:
       matrix:
-        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
+        distro: ${{ fromJSON(needs.distro_matrix.outputs.distros) }}
     name: Build samurai and muon
     container:
       image: ghcr.io/linux-nvme/${{ matrix.distro }}.staging:next
@@ -94,7 +94,7 @@ jobs:
       - build_tools
     strategy:
       matrix:
-        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
+        distro: ${{ fromJSON(needs.distro_matrix.outputs.distros) }}
     name: Deploy final containers
     steps:
       - name: Check out repo
