@@ -50,6 +50,8 @@ def main():
                         choices=["debian", "fedora", "tumbleweed", "alpine"])
     parser.add_argument("--bundles", required=True,
                         help="Comma separated bundle list (e.g. base,python)")
+    parser.add_argument("--features", default="",
+                        help="Comma separated feature list (e.g. muon)")
     parser.add_argument("--output", default=None)
 
     args = parser.parse_args()
@@ -57,6 +59,7 @@ def main():
     config = load_config()
 
     bundle_list = [f.strip() for f in args.bundles.split(",")]
+    features = [f.strip() for f in args.features.split(",") if f.strip()]
     packages = build_package_list(config, args.distro, bundle_list)
 
     base_image = config["base_images"][args.distro]
@@ -72,6 +75,7 @@ def main():
     rendered = template.render(
         base_image=base_image,
         packages=packages,
+        features=features,
     )
 
     output_file = args.output or f"Dockerfile.{args.distro}"
@@ -80,8 +84,8 @@ def main():
         f.write(rendered)
 
     print(f"Generated {output_file} "
-          f"(distro={args.distro}, bundles={args.bundles})")
-
+          f"(distro={args.distro}, bundles={args.bundles}, "
+          f"features={args.features})")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-FROM {{ base_image }}
+FROM opensuse/tumbleweed:latest
 
 ARG TARGETPLATFORM
 ENV LANG=en_US.UTF-8
@@ -10,14 +10,27 @@ RUN zypper --non-interactive refresh && \
         glibc-locale-base \
         timezone && \
     zypper --non-interactive install --no-recommends \
-{% for pkg in packages %}
-    {{ pkg }} \
-{% endfor %}
+    clang \
+    gcc \
+    gcc-c++ \
+    git \
+    meson \
+    pkgconf-pkg-config \
+    swig \
+    valgrind \
+    ca-certificates \
+    cmake \
+    make \
+    pkg-config \
+    libcurl-devel \
+    libarchive-devel \
+    pam-devel \
+    libcap-ng-devel \
+    python3 \
+    python3-PyYAML \
     && zypper clean --all && \
     rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
 
-{% if "muon" in features %}
 COPY --chmod=755 bin/samu bin/muon /usr/bin
-{% endif %}
 
 WORKDIR /build

@@ -64,3 +64,47 @@ bundles:
       - python3-dev
       - py3-pip
       - py3-virtualenv
+
+  staging:
+    debian:
+      - ca-certificates
+      - cmake
+      - make
+      - libpkgconf-dev
+      - libcurl4-openssl-dev
+      - libarchive-dev
+      - libpam-dev
+      - libcap-ng-dev
+      - python3
+      - python3-yaml
+    fedora:
+      - ca-certificates
+      - cmake
+      - make
+      - pkgconf-pkg-config
+      - libcurl-devel
+      - libarchive-devel
+      - pam-devel
+      - libcap-ng-devel
+      - python3
+      - python3-yaml
+    tumbleweed:
+      - ca-certificates
+      - cmake
+      - make
+      - pkg-config
+      - libcurl-devel
+      - libarchive-devel
+      - pam-devel
+      - libcap-ng-devel
+      - python3
+      - python3-PyYAML
+    alpine:
+      - ca-certificates
+      - cmake
+      - make
+      - pkgconf
+      - curl-dev
+      - libarchive-dev
+      - python3
+      - py3-yaml

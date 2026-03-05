@@ -15,11 +15,19 @@ RUN dnf update -y && \
     pkg-config \
     swig \
     valgrind \
+    ca-certificates \
+    cmake \
+    make \
+    pkgconf-pkg-config \
+    libcurl-devel \
+    libarchive-devel \
+    pam-devel \
+    libcap-ng-devel \
     python3 \
-    python3-devel \
-    python3-pip \
+    python3-yaml \
     && dnf clean all && \
     rm -rf /var/cache/dnf/* /tmp/* /var/tmp/*
 
+COPY --chmod=755 bin/samu bin/muon /usr/bin
 
 WORKDIR /build

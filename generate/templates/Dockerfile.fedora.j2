@@ -13,4 +13,8 @@ RUN dnf update -y && \
     && dnf clean all && \
     rm -rf /var/cache/dnf/* /tmp/* /var/tmp/*
 
+{% if "muon" in features %}
+COPY --chmod=755 bin/samu bin/muon /usr/bin
+{% endif %}
+
 WORKDIR /build

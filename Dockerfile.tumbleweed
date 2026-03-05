@@ -25,4 +25,5 @@ RUN zypper --non-interactive refresh && \
     && zypper clean --all && \
     rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
 
+
 WORKDIR /build
