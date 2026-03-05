@@ -57,6 +57,8 @@ jobs:
     name: Build samurai and muon
     container:
       image: ghcr.io/linux-nvme/${{ matrix.type }}.staging:next
+    outputs:
+      all_types: ${{ steps.set_types.outputs.all_types }}
     steps:
       - uses: actions/checkout@v6
 
@@ -68,6 +70,17 @@ jobs:
         with:
           name: samu-muon-${{ matrix.type }}
           path: bin
+
+      - name: Aggregate built types
+        id: set_types
+        run: |
+          echo "${{ matrix.type }}" >> built_types.txt
+
+      - name: Set job output
+        id: set_types
+        run: |
+          types=$(awk '{printf "%s\"%s\"", sep, $0; sep=","}' built_types.txt)
+          echo "all_types=[${types}]" >> $GITHUB_OUTPUT
 
   deploy_containers:
     runs-on: ubuntu-latest
