@@ -11,7 +11,7 @@ jobs:
   # ------------------------
   # Step 1: define the matrix
   # ------------------------
-  define-matrix:
+  distro_matrix:
     runs-on: ubuntu-latest
     outputs:
       distros: ${{ steps.set_matrix.outputs.distros }}
@@ -26,7 +26,8 @@ jobs:
   # ------------------------
   build_staging:
     runs-on: ubuntu-latest
-    needs: define-matrix
+    needs:
+      - distro_matrix
     strategy:
       matrix:
         distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
@@ -62,7 +63,9 @@ jobs:
   # ------------------------
   build_tools:
     runs-on: ubuntu-latest
-    needs: build_staging
+    needs:
+      - distro_matrix
+      - build_staging
     strategy:
       matrix:
         distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
@@ -87,8 +90,8 @@ jobs:
   deploy_containers:
     runs-on: ubuntu-latest
     needs:
+      - distro_matrix
       - build_tools
-      - define-matrix
     strategy:
       matrix:
         distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
