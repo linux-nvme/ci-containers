@@ -50,6 +50,8 @@ def main():
                         choices=["debian", "fedora", "tumbleweed", "alpine"])
     parser.add_argument("--bundles", required=True,
                         help="Comma separated bundle list (e.g. base,python)")
+    parser.add_argument("--features", default="",
+                        help="Comma separated feature list (e.g. muon)")
     parser.add_argument("--output", default=None)
 
     args = parser.parse_args()
@@ -58,6 +60,8 @@ def main():
 
     bundle_list = [f.strip() for f in args.bundles.split(",")]
     packages = build_package_list(config, args.distro, bundle_list)
+
+    feature_list = [f.strip() for f in args.features.split(",") if f.strip()]
 
     base_image = config["base_images"][args.distro]
 
@@ -72,15 +76,22 @@ def main():
     rendered = template.render(
         base_image=base_image,
         packages=packages,
+        features=feature_list,
     )
 
-    output_file = args.output or f"Dockerfile.{args.distro}"
+    if args.output:
+        output_file = args.output
+    elif feature_list:
+        output_file = f"Dockerfile.{args.distro}.{'.'.join(feature_list)}"
+    else:
+        output_file = f"Dockerfile.{args.distro}"
 
     with open(output_file, "w") as f:
         f.write(rendered)
 
     print(f"Generated {output_file} "
-          f"(distro={args.distro}, bundles={args.bundles})")
+          f"(distro={args.distro}, bundles={args.bundles}, "
+          f"features={args.features})")
 
 
 if __name__ == "__main__":
