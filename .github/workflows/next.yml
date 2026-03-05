@@ -58,7 +58,7 @@ jobs:
     container:
       image: ghcr.io/linux-nvme/${{ matrix.type }}.staging:next
     outputs:
-      all_types: ${{ steps.set_types.outputs.all_types }}
+      all_types: ${{ steps.set_output_types.outputs.all_types }}
     steps:
       - uses: actions/checkout@v6
 
@@ -72,12 +72,12 @@ jobs:
           path: bin
 
       - name: Aggregate built types
-        id: set_types
+        id: aggregate_types
         run: |
           echo "${{ matrix.type }}" >> built_types.txt
 
       - name: Set job output
-        id: set_types
+        id: set_output_types
         run: |
           types=$(awk '{printf "%s\"%s\"", sep, $0; sep=","}' built_types.txt)
           echo "all_types=[${types}]" >> $GITHUB_OUTPUT
