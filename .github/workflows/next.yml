@@ -8,18 +8,29 @@ on:
   pull_request:
 
 jobs:
+  # ------------------------
+  # Step 1: define the matrix
+  # ------------------------
+  define-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      distros: ${{ steps.set_matrix.outputs.distros }}
+    steps:
+      - name: Set matrix of distros
+        id: set_matrix
+        run: |
+          echo 'distros=["debian","fedora","tumbleweed","alpine"]' >> $GITHUB_OUTPUT
+
+  # ------------------------
+  # Step 2: Build staging images
+  # ------------------------
   build_staging:
     runs-on: ubuntu-latest
+    needs: define-matrix
     strategy:
       matrix:
-        type:
-          - debian
-          - fedora
-          - tumbleweed
-          - alpine
+        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
     name: Build staging container
-    outputs:
-      built_types: ${{ steps.set_output.outputs.types }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v6
@@ -40,57 +51,47 @@ jobs:
       - name: Build staging image
         uses: docker/build-push-action@v6.19.2
         with:
-          file: staging/Dockerfile.${{ matrix.type }}
+          file: staging/Dockerfile.${{ matrix.distro }}
           platforms: linux/amd64
           push: true
           provenance: false
-          tags: ghcr.io/linux-nvme/${{ matrix.type }}.staging:next
+          tags: ghcr.io/linux-nvme/${{ matrix.distro }}.staging:next
 
-      - name: Set job output
-        id: set_output
-        run: |
-          echo "types=[\"${{ matrix.type }}\"]" >> $GITHUB_OUTPUT
-
+  # ------------------------
+  # Step 3: Build tools using staging containers
+  # ------------------------
   build_tools:
     runs-on: ubuntu-latest
     needs: build_staging
     strategy:
       matrix:
-        type: ${{ fromJSON(needs.build_staging.outputs.built_types) }}
+        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
     name: Build samurai and muon
     container:
-      image: ghcr.io/linux-nvme/${{ matrix.type }}.staging:next
-    outputs:
-      all_types: ${{ steps.set_output_types.outputs.all_types }}
+      image: ghcr.io/linux-nvme/${{ matrix.distro }}.staging:next
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out repo
+        uses: actions/checkout@v6
 
-      - name: Build
+      - name: Build tools
         run: scripts/build-muon.sh
 
       - uses: actions/upload-artifact@v7
-        name: Upload artifacts
         with:
-          name: samu-muon-${{ matrix.type }}
+          name: samu-muon-${{ matrix.distro }}
           path: bin
 
-      - name: Aggregate built types
-        id: aggregate_types
-        run: |
-          echo "${{ matrix.type }}" >> built_types.txt
-
-      - name: Set job output
-        id: set_output_types
-        run: |
-          types=$(awk '{printf "%s\"%s\"", sep, $0; sep=","}' built_types.txt)
-          echo "all_types=[${types}]" >> $GITHUB_OUTPUT
-
+  # ------------------------
+  # Step 4: Deploy final containers
+  # ------------------------
   deploy_containers:
     runs-on: ubuntu-latest
-    needs: build_tools
+    needs:
+      - build_tools
+      - define-matrix
     strategy:
       matrix:
-        type: ${{ fromJSON(needs.build_tools.outputs.all_types) }}
+        distro: ${{ fromJSON(needs.define-matrix.outputs.distros) }}
     name: Deploy final containers
     steps:
       - name: Check out repo
@@ -99,7 +100,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          name: samu-muon-${{ matrix.type }}
+          name: samu-muon-${{ matrix.distro }}
           path: bin
 
       - name: Set up QEMU
@@ -119,11 +120,11 @@ jobs:
         uses: docker/build-push-action@v6.19.2
         with:
           context: .
-          file: Dockerfile.${{ matrix.type }}
+          file: Dockerfile.${{ matrix.distro }}
           platforms: linux/amd64
           push: true
           provenance: false
-          tags: ghcr.io/linux-nvme/${{ matrix.type }}:next
+          tags: ghcr.io/linux-nvme/${{ matrix.distro }}:next
 
   deploy_cross_containers:
     runs-on: ubuntu-latest
