@@ -25,6 +25,5 @@ RUN apk update && \
     && apk cache clean && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-COPY --chmod=755 bin/samu bin/muon /usr/bin
 
 WORKDIR /build

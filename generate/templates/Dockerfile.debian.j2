@@ -15,4 +15,8 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+{% if "muon" in features %}
+COPY --chmod=755 bin/samu bin/muon /usr/bin
+{% endif %}
+
 WORKDIR /build

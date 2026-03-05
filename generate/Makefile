@@ -24,10 +24,10 @@ generate: $(DOCKERFILES)
 staging-dockerfiles: $(STAGING_DOCKERFILES)
 
 ../Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
-	./generate.py --distro $* --bundles base,python --output $@
+	./generate.py --distro $* --bundles base,python --features muon --output $@
 
 ../staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
-	./generate.py --distro $* --bundle base,staging --features muon --output $@
+	./generate.py --distro $* --bundle base,staging  --output $@
 
 # Build targets
 build: $(BUILD_TARGETS)

@@ -26,4 +26,6 @@ RUN apt-get update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+COPY --chmod=755 bin/samu bin/muon /usr/bin
+
 WORKDIR /build

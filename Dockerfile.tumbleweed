@@ -25,5 +25,6 @@ RUN zypper --non-interactive refresh && \
     && zypper clean --all && \
     rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
 
+COPY --chmod=755 bin/samu bin/muon /usr/bin
 
 WORKDIR /build
