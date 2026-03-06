@@ -123,7 +123,7 @@ jobs:
         uses: docker/build-push-action@v6.19.2
         with:
           context: .
-          file: Dockerfile.${{ matrix.distro }}
+          file: main/Dockerfile.${{ matrix.distro }}
           platforms: linux/amd64
           push: true
           provenance: false
@@ -154,7 +154,7 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v6.19.2
         with:
-          file: Dockerfile.ubuntu.${{ matrix.arch }}
+          file: main/Dockerfile.ubuntu.${{ matrix.arch }}
           platforms: linux/amd64
           push: true
           provenance: false

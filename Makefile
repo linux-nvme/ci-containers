@@ -1,6 +1,6 @@
 DISTROS := debian fedora tumbleweed alpine
-DOCKERFILES := $(addprefix ../Dockerfile.,$(DISTROS))
-STAGING_DOCKERFILES := $(addprefix ../staging/Dockerfile.,$(DISTROS))
+DOCKERFILES := $(addprefix main/Dockerfile.,$(DISTROS))
+STAGING_DOCKERFILES := $(addprefix staging/Dockerfile.,$(DISTROS))
 BUILD_TARGETS := $(addprefix build-,$(DISTROS))
 STAGING_BUILD_TARGETS := $(addprefix build-staging-,$(DISTROS))
 
@@ -23,18 +23,18 @@ help:
 generate: $(DOCKERFILES)
 staging-dockerfiles: $(STAGING_DOCKERFILES)
 
-../Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
+main/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
 	./generate.py --distro $* --bundles base,python --features muon --output $@
 
-../staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
+staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
 	./generate.py --distro $* --bundle base,staging  --output $@
 
 # Build targets
 build: $(BUILD_TARGETS)
 staging-build: $(STAGING_BUILD_TARGETS)
 
-$(BUILD_TARGETS): build-%: | ../Dockerfile.%
-	sudo docker build -f ../Dockerfile.$* -t ci:$* .
+$(BUILD_TARGETS): build-%: | main/Dockerfile.%
+	sudo docker build -f main/Dockerfile.$* -t ci:$* .
 
-$(STAGING_BUILD_TARGETS): build-staging-%: | ../staging/Dockerfile.%
-	sudo docker build -f ../staging/Dockerfile.$* -t ci:$*-staging .
+$(STAGING_BUILD_TARGETS): build-staging-%: | staging/Dockerfile.%
+	sudo docker build -f staging/Dockerfile.$* -t ci:$*-staging .
