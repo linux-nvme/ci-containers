@@ -1,4 +1,9 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 Daniel Wagner, SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
 
 BUILDDIR="$(pwd)/.build"
 CC=${CC:-"gcc"}

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) Red Hat, Inc. 2026
+#
+# Author: Michal Rábek <mrabek@redhat.com>
+
 DISTROS := debian fedora tumbleweed alpine
 DOCKERFILES := $(addprefix main/Dockerfile.,$(DISTROS))
 STAGING_DOCKERFILES := $(addprefix staging/Dockerfile.,$(DISTROS))

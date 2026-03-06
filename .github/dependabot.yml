@@ -1,4 +1,10 @@
 ---
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
+
 version: 2
 updates:
   - package-ecosystem: "github-actions"
