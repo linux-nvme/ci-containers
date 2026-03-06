@@ -6,12 +6,12 @@ STAGING_BUILD_TARGETS := $(addprefix build-staging-,$(DISTROS))
 
 .PHONY: all help generate build staging-dockerfiles $(BUILD_TARGETS) $(STAGING_BUILD_TARGETS)
 
-all: generate staging-dockerfiles build staging-build
+all: generate build staging-build
 
 help:
 	@echo "Available targets:"
 	@echo "  all                     - Generate and build all containers (default)"
-	@echo "  generate                - Generate normal Dockerfiles"
+	@echo "  generate                - Generate all Dockerfiles"
 	@echo "  staging-dockerfiles     - Generate staging Dockerfiles"
 	@echo "  build                   - Build normal containers"
 	@echo "  staging-build           - Build staging containers"
@@ -20,7 +20,7 @@ help:
 	@echo "  build-staging-<distro>  - Build staging container for <distro>"
 
 # Generation targets
-generate: $(DOCKERFILES)
+generate: $(DOCKERFILES) $(STAGING_DOCKERFILES)
 staging-dockerfiles: $(STAGING_DOCKERFILES)
 
 main/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
