@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0
+
 DISTROS := debian fedora tumbleweed alpine
 DOCKERFILES := $(addprefix main/Dockerfile.,$(DISTROS))
 STAGING_DOCKERFILES := $(addprefix staging/Dockerfile.,$(DISTROS))
