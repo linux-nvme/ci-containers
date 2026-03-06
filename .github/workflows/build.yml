@@ -3,8 +3,10 @@ name: "🏗 Next"
 
 on:
   push:
-    branch:
+    branches:
       - master
+    tags:
+      - '*.*'
   pull_request:
 
 jobs:
@@ -36,6 +38,14 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
 
+      - name: Get release version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=" >> $GITHUB_ENV
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -56,7 +66,9 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
-          tags: ghcr.io/linux-nvme/${{ matrix.distro }}.staging:next
+          tags: |
+            ghcr.io/linux-nvme/${{ matrix.distro }}.staging:next
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/{0}.staging:main', matrix.distro) || '' }}
 
   # ------------------------
   # Step 3: Build tools using staging containers
@@ -100,6 +112,14 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v6
 
+      - name: Get release version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=" >> $GITHUB_ENV
+          fi
+
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
@@ -127,7 +147,10 @@ jobs:
           platforms: linux/amd64
           push: true
           provenance: false
-          tags: ghcr.io/linux-nvme/${{ matrix.distro }}:next
+          tags: |
+            ghcr.io/linux-nvme/${{ matrix.distro }}:next
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/{0}:{1}', matrix.distro, env.RELEASE_VERSION) || '' }}
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/{0}:latest', matrix.distro) || '' }}
 
   deploy_cross_containers:
     runs-on: ubuntu-latest
@@ -141,6 +164,15 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v6
+
+      - name: Get release version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_VERSION=" >> $GITHUB_ENV
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -160,3 +192,5 @@ jobs:
           provenance: false
           tags: |
             ghcr.io/linux-nvme/ubuntu-cross-${{ matrix.arch }}:next
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/ubuntu-cross-{0}:{1}', matrix.arch, env.RELEASE_VERSION) || '' }}
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/ubuntu-cross-{0}:latest', matrix.arch) || '' }}
