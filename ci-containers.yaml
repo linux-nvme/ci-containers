@@ -43,13 +43,27 @@ bundles:
       - swig
       - valgrind
     alpine:
-      - git
       - gcc
+      - git
       - meson
       - bash
       - linux-headers
       - musl-dev
       - perl
+
+  muon:
+    debian:
+      - libcurl4
+      - libarchive13
+    fedora:
+      - libcurl
+      - libarchive
+    tumbleweed:
+      - libcurl4
+      - libarchive13
+    alpine:
+      - curl
+      - libarchive
 
   python:
     debian:

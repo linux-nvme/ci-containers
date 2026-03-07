@@ -12,13 +12,15 @@ ENV TZ=Europe/Berlin
 RUN apk update && \
     apk add musl-locales tzdata && \
     apk add \
-    git \
     gcc \
+    git \
     meson \
     bash \
     linux-headers \
     musl-dev \
     perl \
+    curl \
+    libarchive \
     python3 \
     python3-dev \
     py3-pip \
