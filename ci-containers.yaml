@@ -65,6 +65,12 @@ bundles:
       - curl
       - libarchive
 
+  musl:
+    debian:
+      - musl
+      - musl-dev
+      - musl-tools
+
   python:
     debian:
       - python3

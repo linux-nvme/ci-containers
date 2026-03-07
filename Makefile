@@ -30,7 +30,11 @@ generate: $(DOCKERFILES) $(STAGING_DOCKERFILES)
 staging-dockerfiles: $(STAGING_DOCKERFILES)
 
 main/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
-	./generate.py --distro $* --bundles base,python --features muon --output $@
+	@if [ "$*" = "debian" ]; then \
+		./generate.py --distro $* --bundles base,muon,musl,python --features muon --output $@; \
+	else \
+		./generate.py --distro $* --bundles base,muon,python --features muon --output $@; \
+	fi
 
 staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
 	./generate.py --distro $* --bundle base,staging  --output $@
