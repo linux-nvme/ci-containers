@@ -24,6 +24,10 @@ bundles:
       - valgrind
       - xz-utils
       - make
+      - libjson-c-dev
+      - libssl-dev
+      - libkeyutils-dev
+      - libdbus-1-dev
     fedora:
       - clang
       - gcc
@@ -33,6 +37,10 @@ bundles:
       - pkg-config
       - swig
       - valgrind
+      - json-c-devel
+      - openssl-devel
+      - keyutils-libs-devel
+      - dbus-devel
     tumbleweed:
       - clang
       - gcc
@@ -42,6 +50,10 @@ bundles:
       - pkgconf-pkg-config
       - swig
       - valgrind
+      - libjson-c-devel
+      - libopenssl-devel
+      - keyutils-devel
+      - dbus-1-devel
     alpine:
       - gcc
       - git
@@ -50,6 +62,10 @@ bundles:
       - linux-headers
       - musl-dev
       - perl
+      - json-c-dev
+      - openssl-dev
+      - keyutils-dev
+      - dbus-dev
 
   muon:
     debian:

@@ -20,6 +20,10 @@ RUN dnf update -y && \
     pkg-config \
     swig \
     valgrind \
+    json-c-devel \
+    openssl-devel \
+    keyutils-libs-devel \
+    dbus-devel \
     libcurl \
     libarchive \
     python3 \

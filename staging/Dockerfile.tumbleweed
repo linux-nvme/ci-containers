@@ -23,6 +23,10 @@ RUN zypper --non-interactive refresh && \
     pkgconf-pkg-config \
     swig \
     valgrind \
+    libjson-c-devel \
+    libopenssl-devel \
+    keyutils-devel \
+    dbus-1-devel \
     ca-certificates \
     cmake \
     make \

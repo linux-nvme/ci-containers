@@ -24,6 +24,10 @@ RUN apt-get update && \
     valgrind \
     xz-utils \
     make \
+    libjson-c-dev \
+    libssl-dev \
+    libkeyutils-dev \
+    libdbus-1-dev \
     libcurl4 \
     libarchive13 \
     musl \

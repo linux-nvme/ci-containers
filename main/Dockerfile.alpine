@@ -19,6 +19,10 @@ RUN apk update && \
     linux-headers \
     musl-dev \
     perl \
+    json-c-dev \
+    openssl-dev \
+    keyutils-dev \
+    dbus-dev \
     curl \
     libarchive \
     python3 \
