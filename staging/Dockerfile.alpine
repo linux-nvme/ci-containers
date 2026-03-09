@@ -12,20 +12,10 @@ ENV TZ=Europe/Berlin
 RUN apk update && \
     apk add musl-locales tzdata && \
     apk add \
-    gcc \
-    git \
-    meson \
-    bash \
-    linux-headers \
-    musl-dev \
-    perl \
-    json-c-dev \
-    openssl-dev \
-    keyutils-dev \
-    dbus-dev \
     ca-certificates \
     cmake \
     make \
+    gcc \
     pkgconf \
     curl-dev \
     libarchive-dev \

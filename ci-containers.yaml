@@ -12,7 +12,7 @@ base_images:
   alpine: "alpine:latest"
 
 bundles:
-  base:
+  nvme:
     debian:
       - clang
       - gcc
@@ -67,20 +67,6 @@ bundles:
       - keyutils-dev
       - dbus-dev
 
-  muon:
-    debian:
-      - libcurl4
-      - libarchive13
-    fedora:
-      - libcurl
-      - libarchive
-    tumbleweed:
-      - libcurl4
-      - libarchive13
-    alpine:
-      - curl
-      - libarchive
-
   musl:
     debian:
       - musl
@@ -118,7 +104,7 @@ bundles:
       - py3-pip
       - py3-virtualenv
 
-  staging:
+  muon:
     debian:
       - ca-certificates
       - cmake
@@ -134,6 +120,7 @@ bundles:
       - ca-certificates
       - cmake
       - make
+      - gcc
       - pkgconf-pkg-config
       - libcurl-devel
       - libarchive-devel
@@ -145,6 +132,7 @@ bundles:
       - ca-certificates
       - cmake
       - make
+      - gcc
       - pkg-config
       - libcurl-devel
       - libarchive-devel
@@ -156,8 +144,24 @@ bundles:
       - ca-certificates
       - cmake
       - make
+      - gcc
       - pkgconf
       - curl-dev
       - libarchive-dev
       - python3
       - py3-yaml
+
+  muon-dep:
+    debian:
+      - libcurl4
+      - libarchive13
+    fedora:
+      - libcurl
+      - libarchive
+    tumbleweed:
+      - libcurl4
+      - libarchive13
+    alpine:
+      - curl
+      - libarchive
+

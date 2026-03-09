@@ -15,21 +15,10 @@ RUN zypper --non-interactive refresh && \
         glibc-locale-base \
         timezone && \
     zypper --non-interactive install --no-recommends \
-    clang \
-    gcc \
-    gcc-c++ \
-    git \
-    meson \
-    pkgconf-pkg-config \
-    swig \
-    valgrind \
-    libjson-c-devel \
-    libopenssl-devel \
-    keyutils-devel \
-    dbus-1-devel \
     ca-certificates \
     cmake \
     make \
+    gcc \
     pkg-config \
     libcurl-devel \
     libarchive-devel \

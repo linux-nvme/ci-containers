@@ -14,22 +14,9 @@ RUN apt-get update && \
     apt-get install -y locales tzdata && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     apt-get install --no-install-recommends -y \
-    clang \
-    gcc \
-    g++ \
-    git \
-    meson \
-    pkg-config \
-    swig \
-    valgrind \
-    xz-utils \
-    make \
-    libjson-c-dev \
-    libssl-dev \
-    libkeyutils-dev \
-    libdbus-1-dev \
     ca-certificates \
     cmake \
+    make \
     libpkgconf-dev \
     libcurl4-openssl-dev \
     libarchive-dev \

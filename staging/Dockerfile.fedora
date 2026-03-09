@@ -12,21 +12,10 @@ ENV TZ=Europe/Berlin
 RUN dnf update -y && \
     dnf install -y glibc-langpack-en tzdata && \
     dnf install -y \
-    clang \
-    gcc \
-    gcc-c++ \
-    git \
-    meson \
-    pkg-config \
-    swig \
-    valgrind \
-    json-c-devel \
-    openssl-devel \
-    keyutils-libs-devel \
-    dbus-devel \
     ca-certificates \
     cmake \
     make \
+    gcc \
     pkgconf-pkg-config \
     libcurl-devel \
     libarchive-devel \
