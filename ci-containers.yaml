@@ -67,6 +67,12 @@ bundles:
       - keyutils-dev
       - dbus-dev
 
+  docs:
+    debian:
+      - python3-sphinx
+      - asciidoc
+      - xmlto
+
   musl:
     debian:
       - musl
