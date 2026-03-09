@@ -161,6 +161,7 @@ bundles:
       - libarchive-dev
       - python3
       - py3-yaml
+      - bash
 
   muon-dep:
     debian:
