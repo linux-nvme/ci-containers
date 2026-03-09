@@ -19,6 +19,7 @@ RUN apt-get update && \
     make \
     git \
     gcc \
+    meson \
     libpkgconf-dev \
     libcurl4-openssl-dev \
     libarchive-dev \

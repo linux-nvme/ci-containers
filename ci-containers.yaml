@@ -117,6 +117,7 @@ bundles:
       - make
       - git
       - gcc
+      - meson
       - libpkgconf-dev
       - libcurl4-openssl-dev
       - libarchive-dev
@@ -128,6 +129,7 @@ bundles:
       - ca-certificates
       - cmake
       - make
+      - meson
       - git
       - gcc
       - pkgconf-pkg-config
@@ -141,6 +143,7 @@ bundles:
       - ca-certificates
       - cmake
       - make
+      - meson
       - git
       - gcc
       - pkg-config
@@ -162,6 +165,8 @@ bundles:
       - python3
       - py3-yaml
       - bash
+      - musl-dev
+      - meson
 
   muon-dep:
     debian:
