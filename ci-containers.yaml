@@ -93,6 +93,10 @@ bundles:
       - gnupg
       - pipx
 
+  coverity:
+    debian:
+      - file
+
   python:
     debian:
       - python3
