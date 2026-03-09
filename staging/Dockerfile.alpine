@@ -15,6 +15,7 @@ RUN apk update && \
     ca-certificates \
     cmake \
     make \
+    git \
     gcc \
     pkgconf \
     curl-dev \

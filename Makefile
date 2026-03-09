@@ -37,7 +37,7 @@ main/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
 	fi
 
 staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
-	./generate.py --distro $* --bundle muon --output $@
+	./generate.py --distro $* --bundles muon --output $@
 
 # Build targets
 build: $(BUILD_TARGETS)

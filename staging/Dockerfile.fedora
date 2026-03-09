@@ -15,6 +15,7 @@ RUN dnf update -y && \
     ca-certificates \
     cmake \
     make \
+    git \
     gcc \
     pkgconf-pkg-config \
     libcurl-devel \
