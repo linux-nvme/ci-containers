@@ -22,6 +22,7 @@ RUN apk update && \
     libarchive-dev \
     python3 \
     py3-yaml \
+    bash \
     && apk cache clean && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
