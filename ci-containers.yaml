@@ -41,6 +41,7 @@ bundles:
       - openssl-devel
       - keyutils-libs-devel
       - dbus-devel
+      - redhat-rpm-config
     tumbleweed:
       - clang
       - gcc
