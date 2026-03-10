@@ -24,6 +24,7 @@ RUN dnf update -y && \
     openssl-devel \
     keyutils-libs-devel \
     dbus-devel \
+    redhat-rpm-config \
     libcurl \
     libarchive \
     python3 \
