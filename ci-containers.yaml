@@ -85,6 +85,7 @@ bundles:
       - curl
       - gnupg
       - pipx
+      - gcovr
 
   coverity:
     debian:

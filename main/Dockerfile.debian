@@ -36,6 +36,7 @@ RUN apt-get update && \
     curl \
     gnupg \
     pipx \
+    gcovr \
     file \
     python3-sphinx \
     asciidoc \
