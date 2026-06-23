@@ -31,9 +31,9 @@ staging-dockerfiles: $(STAGING_DOCKERFILES)
 
 main/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2
 	@if [ "$*" = "debian" ]; then \
-		./generate.py --distro $* --bundles nvme,muon-dep,musl,coverage,coverity,docs,python --features muon --output $@; \
+		./generate.py --distro $* --bundles nvme,muon-dep,musl,coverage,analyzers,docs,python --features muon --output $@; \
 	else \
-		./generate.py --distro $* --bundles nvme,muon-dep,python --features muon --output $@; \
+		./generate.py --distro $* --bundles nvme,analyzers,python --output $@; \
 	fi
 
 staging/Dockerfile.%: ci-containers.yaml generate.py templates/Dockerfile.%.j2

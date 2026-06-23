@@ -12,6 +12,7 @@ ENV TZ=Europe/Berlin
 RUN apk update && \
     apk add musl-locales tzdata && \
     apk add \
+    clang \
     gcc \
     git \
     meson \
@@ -23,8 +24,7 @@ RUN apk update && \
     openssl-dev \
     keyutils-dev \
     dbus-dev \
-    curl \
-    libarchive \
+    clang-analyzer \
     python3 \
     python3-dev \
     py3-pip \
@@ -32,6 +32,5 @@ RUN apk update && \
     && apk cache clean && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-COPY --chmod=755 bin/samu bin/muon /usr/bin
 
 WORKDIR /build
