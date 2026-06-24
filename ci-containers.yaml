@@ -7,7 +7,7 @@
 
 base_images:
   debian: "debian:trixie-slim"
-  fedora: "fedora:43"
+  fedora: "fedora:latest"
   tumbleweed: "opensuse/tumbleweed:latest"
   alpine: "alpine:latest"
 
