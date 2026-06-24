@@ -3,7 +3,7 @@
 # Copyright (C) 2026 Daniel Wagner, SUSE LLC
 #
 # Author: Daniel Wagner <dwagner@suse.de>
-FROM fedora:43
+FROM fedora:latest
 
 ARG TARGETPLATFORM
 ENV LANG=en_US.utf8
