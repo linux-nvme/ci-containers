@@ -27,6 +27,7 @@ RUN zypper --non-interactive refresh && \
     libopenssl-devel \
     keyutils-devel \
     dbus-1-devel \
+    liburing-devel \
     clang-tools \
     python3 \
     python3-devel \

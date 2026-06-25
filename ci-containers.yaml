@@ -28,6 +28,7 @@ bundles:
       - libssl-dev
       - libkeyutils-dev
       - libdbus-1-dev
+      - liburing-dev
     fedora:
       - clang
       - gcc
@@ -41,6 +42,7 @@ bundles:
       - openssl-devel
       - keyutils-libs-devel
       - dbus-devel
+      - liburing-devel
       - redhat-rpm-config
     tumbleweed:
       - clang
@@ -55,6 +57,7 @@ bundles:
       - libopenssl-devel
       - keyutils-devel
       - dbus-1-devel
+      - liburing-devel
     alpine:
       - clang
       - gcc
@@ -68,6 +71,7 @@ bundles:
       - openssl-dev
       - keyutils-dev
       - dbus-dev
+      - liburing-dev
 
   docs:
     debian:

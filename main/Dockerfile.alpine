@@ -24,6 +24,7 @@ RUN apk update && \
     openssl-dev \
     keyutils-dev \
     dbus-dev \
+    liburing-dev \
     clang-analyzer \
     python3 \
     python3-dev \

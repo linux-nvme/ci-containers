@@ -24,6 +24,7 @@ RUN dnf update -y && \
     openssl-devel \
     keyutils-libs-devel \
     dbus-devel \
+    liburing-devel \
     redhat-rpm-config \
     clang-analyzer \
     python3 \

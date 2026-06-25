@@ -28,6 +28,7 @@ RUN apt-get update && \
     libssl-dev \
     libkeyutils-dev \
     libdbus-1-dev \
+    liburing-dev \
     libcurl4 \
     libarchive13 \
     musl \
