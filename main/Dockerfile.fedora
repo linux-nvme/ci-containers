@@ -27,6 +27,7 @@ RUN dnf update -y && \
     liburing-devel \
     redhat-rpm-config \
     file \
+    wget \
     clang-analyzer \
     python3 \
     python3-devel \

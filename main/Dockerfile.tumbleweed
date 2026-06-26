@@ -29,6 +29,7 @@ RUN zypper --non-interactive refresh && \
     dbus-1-devel \
     liburing-devel \
     file \
+    wget \
     clang-tools \
     python3 \
     python3-devel \

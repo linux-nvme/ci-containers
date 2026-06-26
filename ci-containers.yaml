@@ -95,15 +95,19 @@ bundles:
   analyzers:
     debian:
       - file
+      - wget
       - clang-tools
     fedora:
       - file
+      - wget
       - clang-analyzer
     tumbleweed:
       - file
+      - wget
       - clang-tools
     alpine:
       - file
+      - wget
       - clang-analyzer
 
   python:
