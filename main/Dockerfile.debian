@@ -38,6 +38,7 @@ RUN apt-get update && \
     gnupg \
     pipx \
     gcovr \
+    file \
     clang-tools \
     python3-sphinx \
     asciidoc \

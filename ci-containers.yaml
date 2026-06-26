@@ -94,12 +94,16 @@ bundles:
 
   analyzers:
     debian:
+      - file
       - clang-tools
     fedora:
+      - file
       - clang-analyzer
     tumbleweed:
+      - file
       - clang-tools
     alpine:
+      - file
       - clang-analyzer
 
   python:
