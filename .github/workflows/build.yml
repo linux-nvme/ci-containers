@@ -213,12 +213,10 @@ jobs:
     strategy:
       matrix:
         distro: ${{ fromJSON(needs.distro_matrix.outputs.distros) }}
+        exclude:
+          - distro: alpine
 
     name: Deploy nvmetcli containers
-
-    # Alpine is intentionally not supported for nvmetcli
-    if: ${{ matrix.distro != 'alpine' }}
-
     steps:
       - name: Check out repo
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
