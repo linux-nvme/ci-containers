@@ -7,6 +7,7 @@
 
 import argparse
 import sys
+import os
 from pathlib import Path
 
 import yaml
@@ -85,6 +86,7 @@ def main():
 
     output_file = args.output or f"Dockerfile.{args.distro}"
 
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w") as f:
         f.write(rendered)
 

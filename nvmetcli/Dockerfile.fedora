@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 Daniel Wagner, SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
+FROM fedora:latest
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.utf8
+ENV TZ=Europe/Berlin
+
+RUN dnf update -y && \
+    dnf install -y glibc-langpack-en tzdata && \
+    dnf install -y \
+    git \
+    make \
+    python3-configshell \
+    python3-kmod \
+    python3-devel \
+    python3-nose2 \
+    && dnf clean all && \
+    rm -rf /var/cache/dnf/* /tmp/* /var/tmp/*
+
+
+WORKDIR /build

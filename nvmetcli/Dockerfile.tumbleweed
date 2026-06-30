@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 Daniel Wagner, SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
+FROM opensuse/tumbleweed:latest
+
+ARG TARGETPLATFORM
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV TZ=Europe/Berlin
+
+RUN zypper --non-interactive refresh && \
+    zypper --non-interactive install --no-recommends \
+        glibc-locale-base \
+        timezone && \
+    zypper --non-interactive install --no-recommends \
+    git \
+    make \
+    python3-configshell-fb \
+    python3-devel \
+    python3-nose2 \
+    && zypper clean --all && \
+    rm -rf /var/cache/zypp/* /tmp/* /var/tmp/*
+
+
+WORKDIR /build
