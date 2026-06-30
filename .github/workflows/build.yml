@@ -208,7 +208,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - distro_matrix
-      - build_tools
 
     strategy:
       matrix:
