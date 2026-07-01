@@ -11,6 +11,13 @@ base_images:
   tumbleweed: "opensuse/tumbleweed:latest"
   alpine: "alpine:latest"
 
+containerdisk_base_images:
+  debian: "quay.io/containerdisks/debian:13"
+  fedora: "quay.io/containerdisks/fedora:44"
+  tumbleweed: "quay.io/containerdisks/opensuse-tumbleweed:1.0.0"
+
+containerdisk_builder_image: "fedora:latest"
+
 bundles:
   nvme:
     debian:

@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (c) 2026 Western Digital Corporation or its affiliates.
+#
+# Author: Dennis Maisenbacher <dennis.maisenbacher@wdc.com>
+#
+# KubeVirt containerDisk: a bootable tumbleweed cloud image with the nvmetcli
+# tools pre-installed. Unlike a plain container image, a containerDisk holds a
+# bootable VM disk (a qcow2 in /disk, owned by UID 107 == qemu) that KubeVirt
+# boots as the VM root volume. The tools are injected into the base cloud qcow2
+# with virt-customize, then the disk is re-packaged on a scratch image.
+#
+# virt-customize runs a libguestfs appliance VM, so building requires the
+# BuildKit "security.insecure" entitlement:
+#   docker buildx build --allow security.insecure ...
+# using a builder started with "--allow-insecure-entitlement security.insecure".
+
+# Base cloud-image containerDisk we customize (scratch image holding the qcow2).
+FROM quay.io/containerdisks/opensuse-tumbleweed:1.0.0 AS base
+
+# Builder stage: guestfs-tools provides virt-customize; the kernel package is
+# needed for the libguestfs supermin appliance.
+FROM fedora:latest AS builder
+RUN dnf install -y guestfs-tools qemu-img kernel && dnf clean all
+
+# Pull the bootable qcow2 out of the base containerDisk (a single file in /disk).
+COPY --from=base /disk/ /input/
+RUN mv "$(find /input -maxdepth 1 -type f | head -n1)" /disk.qcow2
+
+# Inject the nvmetcli tools into the guest. LIBGUESTFS_BACKEND=direct runs qemu
+# directly and falls back to TCG when /dev/kvm is unavailable (e.g. on
+# GitHub-hosted runners). The guest distro/package manager is auto-detected.
+ENV LIBGUESTFS_BACKEND=direct
+RUN --security=insecure \
+    virt-customize -a /disk.qcow2 \
+    --install git,make,python3-configshell-fb,python3-devel,python3-nose2
+
+# Final containerDisk image: nothing but the disk, per the KubeVirt spec.
+FROM scratch
+COPY --from=builder --chown=107:107 /disk.qcow2 /disk/tumbleweed-nvmetcli.qcow2
