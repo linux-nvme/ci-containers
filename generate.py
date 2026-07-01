@@ -58,6 +58,12 @@ def main():
                         help="Comma separated bundle list (e.g. base,python)")
     parser.add_argument("--features", default="",
                         help="Comma separated feature list (e.g. muon)")
+    parser.add_argument("--template", default=None,
+                        help="Template filename to render "
+                             "(default: Dockerfile.<distro>.j2)")
+    parser.add_argument("--base-images", default="base_images",
+                        help="Config key holding the distro->base image map "
+                             "(e.g. containerdisk_base_images)")
     parser.add_argument("--output", default=None)
 
     args = parser.parse_args()
@@ -68,7 +74,7 @@ def main():
     features = [f.strip() for f in args.features.split(",") if f.strip()]
     packages = build_package_list(config, args.distro, bundle_list)
 
-    base_image = config["base_images"][args.distro]
+    base_image = config[args.base_images][args.distro]
 
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
@@ -76,12 +82,15 @@ def main():
         lstrip_blocks=True,
     )
 
-    template = env.get_template(f"Dockerfile.{args.distro}.j2")
+    template_name = args.template or f"Dockerfile.{args.distro}.j2"
+    template = env.get_template(template_name)
 
     rendered = template.render(
         base_image=base_image,
         packages=packages,
         features=features,
+        distro=args.distro,
+        builder_image=config.get("containerdisk_builder_image", ""),
     )
 
     output_file = args.output or f"Dockerfile.{args.distro}"
