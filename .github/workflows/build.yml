@@ -254,18 +254,20 @@ jobs:
             ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/nvmetcli-{0}:{1}', matrix.distro, env.RELEASE_VERSION) || '' }}
             ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/nvmetcli-{0}:latest', matrix.distro) || '' }}
 
-  deploy_nvmetcli_containerdisks:
+  deploy_containerdisks:
     runs-on: ubuntu-latest
-    needs:
-      - distro_matrix
 
     strategy:
       matrix:
-        distro: ${{ fromJSON(needs.distro_matrix.outputs.distros) }}
-        exclude:
-          - distro: alpine
+        include:
+          - variant: nvmetcli
+            distro: debian
+          - variant: nvmetcli
+            distro: fedora
+          - variant: nvmetcli
+            distro: tumbleweed
 
-    name: Deploy nvmetcli containerDisks
+    name: Deploy ${{ matrix.variant }} containerDisk (${{ matrix.distro }})
     steps:
       - name: Check out repo
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
@@ -284,8 +286,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             guestfs-tools guestmount python3-yaml
 
-      - name: Inject nvmetcli tools into the base cloud image
-        run: scripts/build-containerdisk.sh ${{ matrix.distro }}
+      - name: Inject ${{ matrix.variant }} tools into the base cloud image
+        run: scripts/build-containerdisk.sh ${{ matrix.distro }} ${{ matrix.variant }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -297,15 +299,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push nvmetcli containerDisk
+      - name: Build and push containerDisk
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          context: nvmetcli/build
-          file: nvmetcli/Dockerfile.${{ matrix.distro }}.containerdisk
+          context: ${{ matrix.variant }}/build
+          file: ${{ matrix.variant }}/Dockerfile.${{ matrix.distro }}.containerdisk
           platforms: linux/amd64
           push: true
           provenance: false
           tags: |
-            ghcr.io/linux-nvme/nvmetcli-${{ matrix.distro }}-containerdisk:next
-            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/nvmetcli-{0}-containerdisk:{1}', matrix.distro, env.RELEASE_VERSION) || '' }}
-            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/nvmetcli-{0}-containerdisk:latest', matrix.distro) || '' }}
+            ghcr.io/linux-nvme/${{ matrix.variant }}-${{ matrix.distro }}-containerdisk:next
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/{0}-{1}-containerdisk:{2}', matrix.variant, matrix.distro, env.RELEASE_VERSION) || '' }}
+            ${{ env.RELEASE_VERSION && format('ghcr.io/linux-nvme/{0}-{1}-containerdisk:latest', matrix.variant, matrix.distro) || '' }}

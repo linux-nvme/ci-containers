@@ -64,6 +64,9 @@ def main():
     parser.add_argument("--base-images", default="base_images",
                         help="Config key holding the distro->base image map "
                              "(e.g. containerdisk_base_images)")
+    parser.add_argument("--variant", default="",
+                        help="containerDisk variant name, used in the disk "
+                             "image filename (e.g. nvmetcli, blktests)")
     parser.add_argument("--print-packages", action="store_true",
                         help="Print the resolved package list (comma "
                              "separated) and exit")
@@ -102,6 +105,7 @@ def main():
         packages=packages,
         features=features,
         distro=args.distro,
+        variant=args.variant,
         builder_image=config.get("containerdisk_builder_image", ""),
     )
 

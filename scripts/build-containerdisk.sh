@@ -5,10 +5,11 @@
 #
 # Author: Dennis Maisenbacher <dennis.maisenbacher@wdc.com>
 #
-# Build the customized nvmetcli containerDisk qcow2 for a distro: extract the
-# base cloud image out of its KubeVirt containerDisk and inject the nvmetcli
-# tools. Produces nvmetcli/build/<distro>-nvmetcli.qcow2, which
-# nvmetcli/Dockerfile.<distro>.containerdisk then packages as a scratch
+# Build the customized containerDisk qcow2 for a <distro>/<variant>: extract the
+# base cloud image out of its KubeVirt containerDisk and inject the variant's
+# tools (the bundle of the same name in ci-containers.yaml). Produces
+# <variant>/build/<distro>-<variant>.qcow2, which
+# <variant>/Dockerfile.<distro>.containerdisk then packages as a scratch
 # containerDisk.
 #
 # The tools are injected by mounting the guest filesystem with libguestfs
@@ -23,19 +24,20 @@
 
 set -euo pipefail
 
-distro="${1:?usage: build-containerdisk.sh <distro>}"
+distro="${1:?usage: build-containerdisk.sh <distro> <variant>}"
+variant="${2:?usage: build-containerdisk.sh <distro> <variant>}"
 DOCKER="${DOCKER:-docker}"
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
-base_image="$(./generate.py --distro "$distro" --bundles nvmetcli \
+base_image="$(./generate.py --distro "$distro" --bundles "$variant" \
     --base-images containerdisk_base_images --print-base-image)"
-packages="$(./generate.py --distro "$distro" --bundles nvmetcli --print-packages)"
+packages="$(./generate.py --distro "$distro" --bundles "$variant" --print-packages)"
 
-builddir="nvmetcli/build"
+builddir="${variant}/build"
 workdir="${builddir}/.extract-${distro}"
-qcow="${builddir}/${distro}-nvmetcli.qcow2"
+qcow="${builddir}/${distro}-${variant}.qcow2"
 mnt="$(mktemp -d)"
 
 # Extract the bootable qcow2 from the base containerDisk. It is a scratch image
@@ -44,7 +46,7 @@ mnt="$(mktemp -d)"
 rm -rf "$workdir"
 mkdir -p "$workdir"
 echo "Extracting base disk from ${base_image} ..."
-cid="$($DOCKER create "$base_image" nvmetcli-extract)"
+cid="$($DOCKER create "$base_image" "${variant}-extract")"
 $DOCKER cp "${cid}:/disk/." "$workdir/"
 $DOCKER rm "$cid" >/dev/null
 
@@ -114,7 +116,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Injecting nvmetcli tools into ${distro}: ${packages}"
+echo "Injecting ${variant} tools into ${distro}: ${packages}"
 sudo guestmount -a "$src" -i --rw "$mnt"
 mounted=1
 sudo mount --bind /dev "$mnt/dev"

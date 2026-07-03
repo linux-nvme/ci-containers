@@ -5,12 +5,12 @@
 # Author: Dennis Maisenbacher <dennis.maisenbacher@wdc.com>
 #
 # KubeVirt containerDisk for {{ distro }}: packages a bootable cloud qcow2 that
-# already has the nvmetcli tools injected. The tools are injected on the host
+# already has the {{ variant }} tools injected. The tools are injected on the host
 # by scripts/build-containerdisk.sh (which mounts the image with libguestfs and
 # runs the guest package manager in a chroot), not inside this build: the
 # libguestfs appliance has no working network on hosted CI runners.
 #
 # A containerDisk is just the VM disk in /disk, owned by UID 107 (qemu). The
-# build context is the directory holding the customized qcow2 (nvmetcli/build).
+# build context is the directory holding the customized qcow2 ({{ variant }}/build).
 FROM scratch
-COPY --chown=107:107 {{ distro }}-nvmetcli.qcow2 /disk/{{ distro }}-nvmetcli.qcow2
+COPY --chown=107:107 {{ distro }}-{{ variant }}.qcow2 /disk/{{ distro }}-{{ variant }}.qcow2
