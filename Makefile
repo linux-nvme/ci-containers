@@ -25,8 +25,9 @@ NVMETCLI_BUILD_TARGETS := $(addprefix build-nvmetcli-,$(NVMETCLI_DISTROS))
 # list from the bundle of the same name in ci-containers.yaml. Add a variant by
 # extending CONTAINERDISK_VARIANTS and defining its <variant>_DISTROS list.
 # ----------------------------------------------------------------------
-CONTAINERDISK_VARIANTS := nvmetcli
+CONTAINERDISK_VARIANTS := nvmetcli blktests
 nvmetcli_DISTROS := debian fedora tumbleweed
+blktests_DISTROS := fedora
 
 # Expand the generate + build rules for one containerDisk variant ($1).
 define CONTAINERDISK_rules

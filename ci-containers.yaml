@@ -244,3 +244,57 @@ bundles:
       - python3-nose2
       - python3-pylint
       - python3-flake8
+
+  blktests:
+    fedora:
+      - gcc
+      - clang
+      - make
+      - util-linux
+      - llvm
+      - gawk
+      - fio
+      - udev
+      - kmod
+      - coreutils
+      - gcc-c++
+      - gzip
+      - e2fsprogs
+      - xfsprogs
+      - f2fs-tools
+      - btrfs-progs
+      - device-mapper-multipath
+      - blktrace
+      - kernel-headers
+      - liburing
+      - liburing-devel
+      - nbd
+      - device-mapper
+      - ktls-utils
+      - dosfstools
+      - bc
+      - libnl3-cli
+      - cryptsetup
+      - sg3_utils
+      - pciutils
+      - unzip
+      - jq
+      - git
+      - wget
+      - meson
+      - json-c-devel
+      - openssl-devel
+      - keyutils-libs-devel
+      - dbus-devel
+      - swig
+      - xz-devel
+      - libcurl-devel
+      - curl
+      - libarchive
+      - libarchive-devel
+      - json-c
+      - expect
+      - gcovr
+      - nvme-cli
+      - pkgconf
+      - libudev-devel

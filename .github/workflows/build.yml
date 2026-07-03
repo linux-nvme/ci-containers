@@ -266,6 +266,8 @@ jobs:
             distro: fedora
           - variant: nvmetcli
             distro: tumbleweed
+          - variant: blktests
+            distro: fedora
 
     name: Deploy ${{ matrix.variant }} containerDisk (${{ matrix.distro }})
     steps:

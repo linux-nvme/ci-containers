@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (c) 2026 Western Digital Corporation or its affiliates.
+#
+# Author: Dennis Maisenbacher <dennis.maisenbacher@wdc.com>
+#
+# KubeVirt containerDisk for fedora: packages a bootable cloud qcow2 that
+# already has the blktests tools injected. The tools are injected on the host
+# by scripts/build-containerdisk.sh (which mounts the image with libguestfs and
+# runs the guest package manager in a chroot), not inside this build: the
+# libguestfs appliance has no working network on hosted CI runners.
+#
+# A containerDisk is just the VM disk in /disk, owned by UID 107 (qemu). The
+# build context is the directory holding the customized qcow2 (blktests/build).
+FROM scratch
+COPY --chown=107:107 fedora-blktests.qcow2 /disk/fedora-blktests.qcow2

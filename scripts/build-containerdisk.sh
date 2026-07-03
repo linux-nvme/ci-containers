@@ -139,11 +139,12 @@ if sudo test -e "$mnt/etc/resolv.conf.ci-orig" || sudo test -L "$mnt/etc/resolv.
     sudo mv "$mnt/etc/resolv.conf.ci-orig" "$mnt/etc/resolv.conf"
 fi
 
-# Fedora boots SELinux enforcing. The files we just wrote in the chroot are
-# unlabelled, so schedule a relabel on first boot (equivalent to what
-# virt-customize --selinux-relabel arranges).
-if [ "$distro" = "fedora" ]; then
-    sudo touch "$mnt/.autorelabel"
+# Fedora boots SELinux enforcing, but the tools we inject offline end up
+# unlabelled: dnf under the guestmount chroot cannot apply SELinux file
+# contexts, and an offline relabel is not possible on the CI runner either. Set
+# SELinux permissive so the VM boots (denials are logged, not enforced).
+if [ "$distro" = "fedora" ] && sudo test -f "$mnt/etc/selinux/config"; then
+    sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/' "$mnt/etc/selinux/config"
 fi
 
 # openSUSE installs a kernel (kernel-default) here, and its %posttrans runs
