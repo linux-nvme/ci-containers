@@ -72,8 +72,13 @@ apt-get \$apt_opts install ${packages//,/ }"
         ;;
     tumbleweed)
         # kernel-default-base (pre-installed in the base containerdisk) conflicts
-        # with kernel-default; remove it first so the install succeeds.
-        install_cmd="zypper -n rm kernel-default-base || true; zypper -n in -l ${packages//,/ }"
+        # with kernel-default; remove it first (only if kernel-default is being
+        # installed) so the zypper install succeeds.
+        rm_cmd=""
+        if [[ ",${packages}," == *",kernel-default,"* ]]; then
+            rm_cmd="zypper -n rm kernel-default-base; "
+        fi
+        install_cmd="${rm_cmd}zypper -n in -l ${packages//,/ }"
         ;;
     *)
         echo "error: unknown distro '${distro}'" >&2
