@@ -212,6 +212,32 @@ bundles:
       - curl
       - libarchive
 
+  # Tooling every KubeVirt containerDisk needs on top of its own variant bundle.
+  kubevirt-runner:
+    debian:
+      - sudo
+      - podman
+      - jq
+      - nvme-cli
+      - sg3-utils
+      - lsscsi
+
+    fedora:
+      - sudo
+      - podman
+      - jq
+      - nvme-cli
+      - sg3_utils
+      - lsscsi
+
+    tumbleweed:
+      - sudo
+      - podman
+      - jq
+      - nvme-cli
+      - sg3_utils
+      - lsscsi
+
   nvmetcli:
     debian:
       - ca-certificates
