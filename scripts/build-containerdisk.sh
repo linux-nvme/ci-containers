@@ -28,12 +28,27 @@ distro="${1:?usage: build-containerdisk.sh <distro> <variant>}"
 variant="${2:?usage: build-containerdisk.sh <distro> <variant>}"
 DOCKER="${DOCKER:-docker}"
 
+EXTRA_BUNDLES="${EXTRA_BUNDLES-kubevirt-runner}"
+
+libguestfs_env=()
+for _v in LIBGUESTFS_BACKEND LIBGUESTFS_HV LIBGUESTFS_DEBUG LIBGUESTFS_TRACE; do
+    if [ -n "${!_v-}" ]; then
+        libguestfs_env+=("${_v}=${!_v}")
+    fi
+done
+sudo_guestfs() { sudo env "${libguestfs_env[@]}" "$@"; }
+
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
-base_image="$(./generate.py --distro "$distro" --bundles "$variant" \
+bundles="$variant"
+if [ -n "$EXTRA_BUNDLES" ]; then
+    bundles="${variant},${EXTRA_BUNDLES}"
+fi
+
+base_image="$(./generate.py --distro "$distro" --bundles "$bundles" \
     --base-images containerdisk_base_images --print-base-image)"
-packages="$(./generate.py --distro "$distro" --bundles "$variant" --print-packages)"
+packages="$(./generate.py --distro "$distro" --bundles "$bundles" --print-packages)"
 
 builddir="${variant}/build"
 workdir="${builddir}/.extract-${distro}"
@@ -108,7 +123,7 @@ cleanup() {
             umount_retry "$mnt/$d"
         done
         for _ in 1 2 3 4 5; do
-            sudo guestunmount "$mnt" 2>/dev/null && break
+            sudo_guestfs guestunmount "$mnt" 2>/dev/null && break
             sleep 1
         done
     fi
@@ -117,7 +132,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Injecting ${variant} tools into ${distro}: ${packages}"
-sudo guestmount -a "$src" -i --rw "$mnt"
+sudo_guestfs guestmount -a "$src" -i --rw "$mnt"
 mounted=1
 sudo mount --bind /dev "$mnt/dev"
 sudo mount -t proc proc "$mnt/proc"
@@ -185,7 +200,7 @@ for d in dev proc sys; do
     umount_retry "$mnt/$d"
 done
 for _ in 1 2 3 4 5; do
-    sudo guestunmount "$mnt" && break
+    sudo_guestfs guestunmount "$mnt" && break
     sleep 1
 done
 mounted=0

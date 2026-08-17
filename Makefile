@@ -29,13 +29,15 @@ CONTAINERDISK_VARIANTS := nvmetcli blktests
 nvmetcli_DISTROS := debian fedora tumbleweed
 blktests_DISTROS := fedora
 
+CONTAINERDISK_EXTRA_BUNDLES := kubevirt-runner
+
 # Expand the generate + build rules for one containerDisk variant ($1).
 define CONTAINERDISK_rules
 CONTAINERDISK_DOCKERFILES += $$(foreach d,$$($(1)_DISTROS),$(1)/Dockerfile.$$(d).containerdisk)
 CONTAINERDISK_BUILD_TARGETS += $$(addprefix build-$(1)-containerdisk-,$$($(1)_DISTROS))
 
 $(1)/Dockerfile.%.containerdisk: ci-containers.yaml generate.py templates/Dockerfile.containerdisk.j2
-	./generate.py --distro $$* --bundles $(1) --variant $(1) \
+	./generate.py --distro $$* --bundles $(1),$(CONTAINERDISK_EXTRA_BUNDLES) --variant $(1) \
 		--template Dockerfile.containerdisk.j2 \
 		--base-images containerdisk_base_images \
 		--output $$@
