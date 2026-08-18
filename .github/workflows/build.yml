@@ -310,7 +310,7 @@ jobs:
       - name: Install libguestfs tools
         uses: ./.github/actions/apt-install
         with:
-          packages: guestfs-tools guestmount python3-yaml python3-jinja2
+          packages: guestfs-tools guestmount libguestfs-xfs python3-yaml python3-jinja2
 
       - name: Generate ${{ matrix.variant }} containerDisk Dockerfile
         run: ./generate generate --target containerdisk --variant ${{ matrix.variant }} --distro ${{ matrix.distro }}

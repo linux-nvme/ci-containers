@@ -76,7 +76,8 @@ if [ "$distro" = "tumbleweed" ]; then
         python3 -c 'import json, sys; print(json.load(sys.stdin)["virtual-size"])')"
     bigger_tumbleweed="${workdir}/bigger_tumbleweed.qcow2"
     qemu-img create -f qcow2 "$bigger_tumbleweed" "$((disk_bytes + 2 * 1024 * 1024 * 1024))"
-    sudo_guestfs virt-resize --expand /dev/sda3 "$src" "$bigger_tumbleweed"
+    sudo_guestfs virt-resize --unknown-filesystems error \
+        --expand /dev/sda3 "$src" "$bigger_tumbleweed"
     src="$bigger_tumbleweed"
 fi
 
