@@ -71,6 +71,15 @@ if [ -z "$src" ]; then
     exit 1
 fi
 
+if [ "$distro" = "tumbleweed" ]; then
+    disk_bytes="$(sudo qemu-img info --output=json "$src" |
+        python3 -c 'import json, sys; print(json.load(sys.stdin)["virtual-size"])')"
+    bigger_tumbleweed="${workdir}/bigger_tumbleweed.qcow2"
+    qemu-img create -f qcow2 "$bigger_tumbleweed" "$((disk_bytes + 2 * 1024 * 1024 * 1024))"
+    sudo_guestfs virt-resize --expand /dev/sda3 "$src" "$bigger_tumbleweed"
+    src="$bigger_tumbleweed"
+fi
+
 # Package-manager invocation per distro, mirroring what `virt-customize
 # --install` runs so the resulting image is equivalent.
 case "$distro" in
@@ -178,6 +187,7 @@ if [ "$distro" = "tumbleweed" ]; then
     sudo chroot "$mnt" /bin/bash -euo pipefail -s <<'REPAIR'
 kver="$(ls -1 /lib/modules | sort -V | tail -n1)"
 echo "build-containerdisk: regenerating generic initramfs for ${kver}"
+rm -f "/boot/initrd-${kver}"
 dracut --force --no-hostonly "/boot/initrd-${kver}" "${kver}"
 
 root_spec="$(awk '$1 !~ /^#/ && $2 == "/" { print $1; exit }' /etc/fstab)"
