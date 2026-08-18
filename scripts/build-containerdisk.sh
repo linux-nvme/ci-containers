@@ -54,6 +54,7 @@ builddir="${variant}/build"
 workdir="${builddir}/.extract-${distro}"
 qcow="${builddir}/${distro}-${variant}.qcow2"
 mnt="$(mktemp -d)"
+guestmount_pid="${workdir}/guestmount.pid"
 
 # Extract the bootable qcow2 from the base containerDisk. It is a scratch image
 # holding the disk in /disk, so give `docker create` a dummy command (the
@@ -125,24 +126,55 @@ umount_retry() {
     sudo umount -l "$target" 2>/dev/null || true
 }
 
+# Tear down the guest mount and wait for the image to be released.
+#
+# guestunmount only detaches the FUSE mountpoint: the guestmount worker process
+# behind it is still flushing writes and keeps the qcow2 open (and qemu-locked)
+# for a while afterwards. Touching the image before that process is gone hands
+# out a half-finalized disk and makes qemu-img fail to take its lock, so wait
+# for the pid guestmount recorded. See "Race conditions possible when shutting
+# down the connection" in guestmount(1).
+unmount_guest() {
+    local pid timeout=120
+    pid="$(sudo cat "$guestmount_pid" 2>/dev/null)"
+
+    for d in dev proc sys; do
+        umount_retry "$mnt/$d"
+    done
+    for _ in 1 2 3 4 5; do
+        sudo_guestfs guestunmount "$mnt" && break
+        sleep 1
+    done
+    mounted=0
+
+    if [ -z "$pid" ]; then
+        echo "error: guestmount wrote no pid file; cannot tell when ${src} is released" >&2
+        return 1
+    fi
+    # The worker runs as root, so an unprivileged signal check against it fails
+    # with EPERM and would look like the process had already exited.
+    while sudo kill -0 "$pid" 2>/dev/null; do
+        if [ "$timeout" -eq 0 ]; then
+            echo "error: guestmount (pid ${pid}) still holds ${src} after waiting" >&2
+            return 1
+        fi
+        sleep 1
+        timeout=$((timeout - 1))
+    done
+}
+
 mounted=0
 cleanup() {
     set +e
     if [ "$mounted" = 1 ]; then
-        for d in dev proc sys; do
-            umount_retry "$mnt/$d"
-        done
-        for _ in 1 2 3 4 5; do
-            sudo_guestfs guestunmount "$mnt" 2>/dev/null && break
-            sleep 1
-        done
+        unmount_guest
     fi
     rmdir "$mnt" 2>/dev/null
 }
 trap cleanup EXIT
 
 echo "Injecting ${variant} tools into ${distro}: ${packages}"
-sudo_guestfs guestmount -a "$src" -i --rw "$mnt"
+sudo_guestfs guestmount -a "$src" -i --rw --pid-file "$guestmount_pid" "$mnt"
 mounted=1
 sudo mount --bind /dev "$mnt/dev"
 sudo mount -t proc proc "$mnt/proc"
@@ -207,14 +239,7 @@ fi
 REPAIR
 fi
 
-for d in dev proc sys; do
-    umount_retry "$mnt/$d"
-done
-for _ in 1 2 3 4 5; do
-    sudo_guestfs guestunmount "$mnt" && break
-    sleep 1
-done
-mounted=0
+unmount_guest
 
 mkdir -p "$builddir"
 sudo mv -f "$src" "$qcow"
