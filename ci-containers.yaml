@@ -247,6 +247,7 @@ bundles:
       - python3-dev
       - python3-nose2
       - python3-coverage
+      - python3-mypy
       - pylint
       - flake8
 
@@ -255,10 +256,10 @@ bundles:
       - git
       - make
       - python3-configshell
-      - python3-kmod
       - python3-devel
       - python3-nose2
       - python3-coverage
+      - python3-mypy
       - python3-pylint
       - python3-flake8
 
@@ -271,6 +272,7 @@ bundles:
       - python3-devel
       - python3-nose2
       - python3-coverage
+      - python3-mypy
       - python3-pylint
       - python3-flake8
 
