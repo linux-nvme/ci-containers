@@ -1,0 +1,453 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 Daniel Wagner, SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
+"""
+ci-containers build tool.
+
+Single entry point for everything that used to be spread across the
+Makefile and build-all.sh: rendering Dockerfiles from ci-containers.yaml +
+templates/, building the resulting images, and smoke-building every main
+Dockerfile with stand-in muon/samu binaries.
+
+Subcommands:
+  render    Render one Dockerfile from a template (low-level; used
+            internally by `generate`/`build` and by scripts/build-containerdisk.sh).
+            Also the default when no subcommand is given, for backward
+            compatibility with existing callers.
+  generate  Render Dockerfiles for the main/staging/nvmetcli/containerdisk
+            targets.
+  build     Generate (unless --no-generate) then `docker build` images for
+            those same targets.
+  all       generate --target all, then build --target main,staging,nvmetcli
+            (mirrors the old `make all`).
+  smoke     Stand in dummy bin/muon + bin/samu, then `docker buildx build`
+            every main/Dockerfile.* found on disk (mirrors build-all.sh).
+
+Run `./generate <subcommand> --help` for the options of each.
+"""
+
+import argparse
+import glob
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+from jinja2 import Environment, FileSystemLoader
+
+
+CONFIG_FILE = "ci-containers.yaml"
+TEMPLATE_DIR = "templates"
+
+DISTROS = ["debian", "fedora", "tumbleweed", "alpine"]
+NVMETCLI_DISTROS = ["debian", "fedora", "tumbleweed"]
+CONTAINERDISK_VARIANTS = {
+    "nvmetcli": ["debian", "fedora", "tumbleweed"],
+    "blktests": ["fedora"],
+}
+# Tooling every KubeVirt containerDisk needs on top of its own variant bundle.
+CONTAINERDISK_EXTRA_BUNDLES = ["kubevirt-runner"]
+
+DUMMY_TOOL_SCRIPTS = {
+    "samu": "dummy samu",
+    "muon": "dummy muon",
+}
+
+
+# ----------------------------------------------------------------------
+# Shared helpers
+# ----------------------------------------------------------------------
+
+def load_config():
+    with open(CONFIG_FILE, "r") as f:
+        return yaml.safe_load(f)
+
+
+def build_package_list(config, distro, bundle_list):
+    packages = []
+
+    for bundle in bundle_list:
+        if bundle not in config["bundles"]:
+            sys.exit(f"Unknown bundle: {bundle}")
+
+        bundle_block = config["bundles"][bundle]
+
+        if distro not in bundle_block:
+            sys.exit(f"Bundle '{bundle}' not defined for distro '{distro}'")
+
+        packages.extend(bundle_block[distro])
+
+    # Deduplicate while preserving order
+    seen = set()
+    deduped = []
+    for pkg in packages:
+        if pkg not in seen:
+            deduped.append(pkg)
+            seen.add(pkg)
+
+    return deduped
+
+
+def render_dockerfile(config, *, distro, bundles, features=(), template=None,
+                       base_images="base_images", variant="", output):
+    """Render one Dockerfile and write it to `output`. Returns the path written."""
+    bundle_list = bundles if isinstance(bundles, list) else \
+        [b.strip() for b in bundles.split(",")]
+    feature_list = list(features) if not isinstance(features, str) else \
+        [f.strip() for f in features.split(",") if f.strip()]
+
+    packages = build_package_list(config, distro, bundle_list)
+    base_image = config[base_images][distro]
+
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATE_DIR),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    template_name = template or f"Dockerfile.{distro}.j2"
+    tmpl = env.get_template(template_name)
+
+    rendered = tmpl.render(
+        base_image=base_image,
+        packages=packages,
+        features=feature_list,
+        distro=distro,
+        variant=variant,
+        builder_image=config.get("containerdisk_builder_image", ""),
+    )
+
+    os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
+    with open(output, "w") as f:
+        f.write(rendered)
+
+    print(f"Generated {output} "
+          f"(distro={distro}, bundles={','.join(bundle_list)}, "
+          f"features={','.join(feature_list)})")
+    return output
+
+
+def run(cmd, **kwargs):
+    print(f"+ {' '.join(cmd)}")
+    try:
+        subprocess.run(cmd, check=True, **kwargs)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+    except FileNotFoundError as e:
+        sys.exit(f"error: {e}")
+
+
+def docker_build(docker_cmd, dockerfile, tag, context="."):
+    run(docker_cmd.split() + ["build", "-f", dockerfile, "-t", tag, context])
+
+
+def default_docker_cmd():
+    return os.environ.get("DOCKER", "sudo docker")
+
+
+# ----------------------------------------------------------------------
+# Per-target render helpers (main/staging/nvmetcli/containerdisk)
+# ----------------------------------------------------------------------
+
+def main_bundles_and_features(distro):
+    if distro == "debian":
+        return (["nvme", "muon-dep", "musl", "coverage", "analyzers", "docs", "python"],
+                 ["muon"])
+    return (["nvme", "analyzers", "python"], [])
+
+
+def gen_main(config, distro):
+    bundles, features = main_bundles_and_features(distro)
+    return render_dockerfile(config, distro=distro, bundles=bundles, features=features,
+                              output=f"main/Dockerfile.{distro}")
+
+
+def gen_staging(config, distro):
+    return render_dockerfile(config, distro=distro, bundles=["muon"],
+                              output=f"staging/Dockerfile.{distro}")
+
+
+def gen_nvmetcli(config, distro):
+    return render_dockerfile(config, distro=distro, bundles=["nvmetcli"],
+                              output=f"nvmetcli/Dockerfile.{distro}")
+
+
+def gen_containerdisk(config, distro, variant):
+    bundles = [variant] + CONTAINERDISK_EXTRA_BUNDLES
+    return render_dockerfile(
+        config, distro=distro, bundles=bundles,
+        template="Dockerfile.containerdisk.j2",
+        base_images="containerdisk_base_images", variant=variant,
+        output=f"{variant}/Dockerfile.{distro}.containerdisk")
+
+
+def containerdisk_jobs(variant_filter=None, distro_filter=None):
+    for variant, distros in CONTAINERDISK_VARIANTS.items():
+        if variant_filter and variant != variant_filter:
+            continue
+        for distro in distros:
+            if distro_filter and distro != distro_filter:
+                continue
+            yield variant, distro
+
+
+# ----------------------------------------------------------------------
+# generate
+# ----------------------------------------------------------------------
+
+def cmd_generate(args):
+    config = load_config()
+    target = args.target
+    distro = args.distro
+
+    if target in ("all", "main"):
+        for d in DISTROS:
+            if distro and d != distro:
+                continue
+            gen_main(config, d)
+
+    if target in ("all", "staging"):
+        for d in DISTROS:
+            if distro and d != distro:
+                continue
+            gen_staging(config, d)
+
+    if target in ("all", "nvmetcli"):
+        for d in NVMETCLI_DISTROS:
+            if distro and d != distro:
+                continue
+            gen_nvmetcli(config, d)
+
+    if target in ("all", "containerdisk"):
+        for variant, d in containerdisk_jobs(args.variant, distro):
+            gen_containerdisk(config, d, variant)
+
+
+# ----------------------------------------------------------------------
+# build
+# ----------------------------------------------------------------------
+
+def cmd_build(args):
+    config = load_config()
+    target = args.target
+    distro = args.distro
+    docker_cmd = args.docker
+
+    # "all" mirrors `make all`'s build scope: main + staging + nvmetcli.
+    # containerdisk needs sudo/libguestfs and must be requested explicitly.
+    if target in ("all", "main"):
+        for d in DISTROS:
+            if distro and d != distro:
+                continue
+            if not args.no_generate:
+                gen_main(config, d)
+            docker_build(docker_cmd, f"main/Dockerfile.{d}", f"ci:{d}")
+
+    if target in ("all", "staging"):
+        for d in DISTROS:
+            if distro and d != distro:
+                continue
+            if not args.no_generate:
+                gen_staging(config, d)
+            docker_build(docker_cmd, f"staging/Dockerfile.{d}", f"ci:{d}-staging")
+
+    if target in ("all", "nvmetcli"):
+        for d in NVMETCLI_DISTROS:
+            if distro and d != distro:
+                continue
+            if not args.no_generate:
+                gen_nvmetcli(config, d)
+            docker_build(docker_cmd, f"nvmetcli/Dockerfile.{d}", f"ci:nvmetcli-{d}")
+
+    if target == "containerdisk":
+        jobs = list(containerdisk_jobs(args.variant, distro))
+        if not jobs:
+            sys.exit(f"error: no containerDisk variant/distro matches "
+                      f"variant={args.variant!r} distro={distro!r}")
+        for variant, d in jobs:
+            if not args.no_generate:
+                gen_containerdisk(config, d, variant)
+            # Inject the variant's tools into the base cloud image on the
+            # host, then package the resulting qcow2 as a scratch containerDisk.
+            run(["scripts/build-containerdisk.sh", d, variant],
+                env={**os.environ, "DOCKER": docker_cmd})
+            docker_build(docker_cmd, f"{variant}/Dockerfile.{d}.containerdisk",
+                         f"ci:{variant}-{d}-containerdisk", f"{variant}/build")
+
+
+# ----------------------------------------------------------------------
+# all
+# ----------------------------------------------------------------------
+
+def cmd_all(args):
+    gen_args = argparse.Namespace(target="all", distro=None, variant=None)
+    cmd_generate(gen_args)
+
+    build_args = argparse.Namespace(target="all", distro=None, variant=None,
+                                     docker=args.docker, no_generate=True)
+    cmd_build(build_args)
+
+
+# ----------------------------------------------------------------------
+# smoke (build-all.sh)
+# ----------------------------------------------------------------------
+
+def write_dummy_tools():
+    bindir = Path("bin")
+    bindir.mkdir(parents=True, exist_ok=True)
+    for name, echo_text in DUMMY_TOOL_SCRIPTS.items():
+        path = bindir / name
+        path.write_text(f'#!/usr/bin/env sh\necho "{echo_text}"\n')
+        path.chmod(0o755)
+        print(f"Wrote dummy tool {path}")
+
+
+def cmd_smoke(args):
+    config = load_config()
+
+    write_dummy_tools()
+
+    if not args.no_generate:
+        for d in DISTROS:
+            if args.distro and d != args.distro:
+                continue
+            gen_main(config, d)
+
+    dockerfiles = sorted(glob.glob("main/Dockerfile.*"))
+    if args.distro:
+        dockerfiles = [f for f in dockerfiles if f.endswith(f".{args.distro}")
+                        or f".{args.distro}." in f]
+    if not dockerfiles:
+        sys.exit("error: no main/Dockerfile.* found to smoke-build")
+
+    for dockerfile in dockerfiles:
+        run(["docker", "buildx", "build", "--platform", "linux/amd64", ".",
+             "-f", dockerfile])
+
+
+# ----------------------------------------------------------------------
+# render (original single-Dockerfile behavior; also the implicit default)
+# ----------------------------------------------------------------------
+
+def cmd_render(args):
+    config = load_config()
+
+    bundle_list = [f.strip() for f in args.bundles.split(",")]
+    packages = build_package_list(config, args.distro, bundle_list)
+    base_image = config[args.base_images][args.distro]
+
+    if args.print_packages:
+        print(",".join(packages))
+        return
+    if args.print_base_image:
+        print(base_image)
+        return
+
+    output = args.output or f"Dockerfile.{args.distro}"
+    render_dockerfile(config, distro=args.distro, bundles=bundle_list,
+                       features=args.features, template=args.template,
+                       base_images=args.base_images, variant=args.variant,
+                       output=output)
+
+
+# ----------------------------------------------------------------------
+# CLI
+# ----------------------------------------------------------------------
+
+def add_target_args(p, targets, default="all", variant_help=None):
+    p.add_argument("--target", choices=targets, default=default)
+    p.add_argument("--distro", choices=DISTROS, default=None,
+                    help="Restrict to one distro (default: every distro "
+                         "the selected target(s) apply to)")
+    p.add_argument("--variant", choices=list(CONTAINERDISK_VARIANTS),
+                    default=None,
+                    help=variant_help or
+                         "Restrict to one containerDisk variant "
+                         "(only meaningful with --target containerdisk)")
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="generate",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_generate = sub.add_parser(
+        "generate", help="Render Dockerfiles from ci-containers.yaml + templates/")
+    add_target_args(p_generate, ["all", "main", "staging", "nvmetcli", "containerdisk"])
+    p_generate.set_defaults(func=cmd_generate)
+
+    p_build = sub.add_parser(
+        "build", help="Generate (unless --no-generate) then docker-build images")
+    add_target_args(p_build, ["all", "main", "staging", "nvmetcli", "containerdisk"])
+    p_build.add_argument("--docker", default=default_docker_cmd(),
+                          help="Container build command (default: $DOCKER or "
+                               "'sudo docker')")
+    p_build.add_argument("--no-generate", action="store_true",
+                          help="Build existing Dockerfiles as-is instead of "
+                               "regenerating them first")
+    p_build.set_defaults(func=cmd_build)
+
+    p_all = sub.add_parser(
+        "all", help="generate --target all, then build main+staging+nvmetcli "
+                     "(equivalent of the old `make all`)")
+    p_all.add_argument("--docker", default=default_docker_cmd())
+    p_all.set_defaults(func=cmd_all)
+
+    p_smoke = sub.add_parser(
+        "smoke", help="Stand in dummy bin/muon+bin/samu and docker-buildx-build "
+                       "every main/Dockerfile.* (equivalent of build-all.sh)")
+    p_smoke.add_argument("--distro", choices=DISTROS, default=None)
+    p_smoke.add_argument("--no-generate", action="store_true",
+                          help="Don't regenerate main/Dockerfile.* first, just "
+                               "build whatever is already on disk")
+    p_smoke.set_defaults(func=cmd_smoke)
+
+    p_render = sub.add_parser(
+        "render", help="Render a single Dockerfile from explicit --distro/"
+                        "--bundles/--template (low-level; also the default "
+                        "when no subcommand is given)")
+    p_render.add_argument("--distro", required=True, choices=DISTROS)
+    p_render.add_argument("--bundles", required=True,
+                           help="Comma separated bundle list (e.g. base,python)")
+    p_render.add_argument("--features", default="",
+                           help="Comma separated feature list (e.g. muon)")
+    p_render.add_argument("--template", default=None,
+                           help="Template filename to render "
+                                "(default: Dockerfile.<distro>.j2)")
+    p_render.add_argument("--base-images", default="base_images",
+                           help="Config key holding the distro->base image map "
+                                "(e.g. containerdisk_base_images)")
+    p_render.add_argument("--variant", default="",
+                           help="containerDisk variant name, used in the disk "
+                                "image filename (e.g. nvmetcli, blktests)")
+    p_render.add_argument("--print-packages", action="store_true",
+                           help="Print the resolved package list (comma "
+                                "separated) and exit")
+    p_render.add_argument("--print-base-image", action="store_true",
+                           help="Print the resolved base image and exit")
+    p_render.add_argument("--output", default=None)
+    p_render.set_defaults(func=cmd_render)
+
+    return parser
+
+
+def main():
+    argv = sys.argv[1:]
+    known_commands = {"generate", "build", "all", "smoke", "render", "-h", "--help"}
+    # Backward compatibility: `./generate --distro ... --bundles ...` (no
+    # subcommand) is the same as `./generate render --distro ... --bundles ...`.
+    if not argv or argv[0] not in known_commands:
+        argv = ["render"] + argv
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

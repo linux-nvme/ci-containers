@@ -46,9 +46,9 @@ if [ -n "$EXTRA_BUNDLES" ]; then
     bundles="${variant},${EXTRA_BUNDLES}"
 fi
 
-base_image="$(./generate.py --distro "$distro" --bundles "$bundles" \
+base_image="$(./generate --distro "$distro" --bundles "$bundles" \
     --base-images containerdisk_base_images --print-base-image)"
-packages="$(./generate.py --distro "$distro" --bundles "$bundles" --print-packages)"
+packages="$(./generate --distro "$distro" --bundles "$bundles" --print-packages)"
 
 builddir="${variant}/build"
 workdir="${builddir}/.extract-${distro}"
