@@ -3,24 +3,24 @@
 # Copyright (C) 2026 Daniel Wagner, SUSE LLC
 #
 # Author: Daniel Wagner <dwagner@suse.de>
-FROM ubuntu:noble
+FROM {{ base_image }}
 
 ARG TARGETPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.utf8
-RUN dpkg --add-architecture s390x && \
+RUN dpkg --add-architecture {{ dpkg_arch }} && \
     rm /etc/apt/sources.list.d/ubuntu.sources && \
     echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" > /etc/apt/sources.list && \
     echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
     echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse" >> /etc/apt/sources.list && \
-    echo "deb [arch=s390x] http://ports.ubuntu.com/ noble main universe restricted" >> /etc/apt/sources.list && \
-    echo "deb [arch=s390x] http://ports.ubuntu.com/ noble-updates main universe restricted" >> /etc/apt/sources.list && \
+    echo "deb [arch={{ dpkg_arch }}] http://ports.ubuntu.com/ noble main universe restricted" >> /etc/apt/sources.list && \
+    echo "deb [arch={{ dpkg_arch }}] http://ports.ubuntu.com/ noble-updates main universe restricted" >> /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y locales && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     apt-get install --no-install-recommends -y \
-    meson pkg-config ca-certificates git qemu-user-static \
-    gcc libc6-dev gcc-s390x-linux-gnu libc-dev:s390x libjson-c-dev:s390x \
-    xz-utils && \
-    apt-get clean && \
+{% for pkg in packages %}
+    {{ pkg }} \
+{% endfor %}
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

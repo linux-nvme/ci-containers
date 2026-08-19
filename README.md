@@ -13,8 +13,10 @@ Dockerfiles are generated from `ci-containers.yaml` + `templates/*.j2` by
 ```
 ./generate generate                                    # render every Dockerfile
 ./generate generate --target main --distro debian       # render just one
+./generate generate --target cross --arch s390x          # render one cross Dockerfile
 ./generate build                                        # generate + docker build main/staging/nvmetcli
 ./generate build --target containerdisk --variant nvmetcli --distro fedora
+./generate build --target cross --arch armhf
 ./generate all                                          # generate everything, build main/staging/nvmetcli
 ./generate smoke                                        # dummy muon/samu + buildx-build every main Dockerfile
 ```
@@ -29,5 +31,7 @@ The rendered Dockerfiles under `main/`, `staging/`, `nvmetcli/`, etc. are
 right before it's built, so they can never go stale relative to
 `ci-containers.yaml`. Run `./generate generate` locally to render them into
 your working tree before building by hand.
-(`main/Dockerfile.ubuntu.*` are hand-written cross-compile Dockerfiles, not
-generated, and stay checked in.)
+(`main/Dockerfile.ubuntu.{armhf,ppc64le,s390x}` are the Ubuntu cross-compile
+containers, rendered from `templates/Dockerfile.ubuntu-cross.j2` and the
+`cross_arches`/`bundles.cross` entries in `ci-containers.yaml`, same as
+everything else under `main/`.)

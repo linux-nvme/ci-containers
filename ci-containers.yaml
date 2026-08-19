@@ -10,11 +10,40 @@ base_images:
   fedora: "fedora:latest"
   tumbleweed: "opensuse/tumbleweed:latest"
   alpine: "alpine:latest"
+  ubuntu: "ubuntu:noble"
 
 containerdisk_base_images:
   debian: "quay.io/containerdisks/debian:13"
   fedora: "quay.io/containerdisks/fedora:44"
   tumbleweed: "quay.io/containerdisks/opensuse-tumbleweed:1.0.0"
+
+# Cross-compile containers (main/Dockerfile.<distro>.<arch>), one map per
+# base distro so another distro can be added later alongside "ubuntu"
+# without reshaping this. For each arch: the dpkg foreign-architecture name
+# (used both for `dpkg --add-architecture` and the ports.ubuntu.com deb
+# lines) and the per-arch package list (cross-gcc plus the foreign-arch -dev
+# packages). Note ppc64le's dpkg arch is "ppc64el", not "ppc64le". Packages
+# common to every arch of a distro live in bundles.cross.<distro> instead.
+cross_arches:
+  ubuntu:
+    armhf:
+      dpkg_arch: armhf
+      packages:
+        - gcc-arm-linux-gnueabihf
+        - libc-dev:armhf
+        - libjson-c-dev:armhf
+    ppc64le:
+      dpkg_arch: ppc64el
+      packages:
+        - gcc-powerpc64le-linux-gnu
+        - libc-dev:ppc64el
+        - libjson-c-dev:ppc64el
+    s390x:
+      dpkg_arch: s390x
+      packages:
+        - gcc-s390x-linux-gnu
+        - libc-dev:s390x
+        - libjson-c-dev:s390x
 
 bundles:
   nvme:
@@ -197,6 +226,22 @@ bundles:
       - bash
       - musl-dev
       - meson
+
+  # Common packages for the cross-compile containers
+  # (main/Dockerfile.<distro>.<arch>), one list per base distro. Per-arch
+  # packages (cross-gcc, libc-dev/libjson-c-dev for the foreign arch) come
+  # from cross_arches.<distro>.<arch>.packages above and are merged in by
+  # gen_cross().
+  cross:
+    ubuntu:
+      - meson
+      - pkg-config
+      - ca-certificates
+      - git
+      - qemu-user-static
+      - gcc
+      - libc6-dev
+      - xz-utils
 
   muon-dep:
     debian:

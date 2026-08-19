@@ -45,6 +45,15 @@ TEMPLATE_DIR = "templates"
 
 DISTROS = ["debian", "fedora", "tumbleweed", "alpine"]
 NVMETCLI_DISTROS = ["debian", "fedora", "tumbleweed"]
+# Cross-compile containers (main/Dockerfile.<distro>.<arch>), one arch list
+# per base distro. Only "ubuntu" today; add another distro's arch list here
+# (plus its cross_arches/bundles.cross entries in ci-containers.yaml and a
+# templates/Dockerfile.<distro>-cross.j2) to cross-build from it too.
+CROSS_TARGETS = {
+    "ubuntu": ["armhf", "ppc64le", "s390x"],
+}
+# Flat, deduplicated arch list across every cross distro, for --arch choices.
+CROSS_ARCHES = sorted({arch for arches in CROSS_TARGETS.values() for arch in arches})
 CONTAINERDISK_VARIANTS = {
     "nvmetcli": ["debian", "fedora", "tumbleweed"],
     "blktests": ["fedora"],
@@ -93,7 +102,7 @@ def build_package_list(config, distro, bundle_list):
 
 
 def render_dockerfile(config, *, distro, bundles, features=(), template=None,
-                       base_images="base_images", variant="", output):
+                       base_images="base_images", variant="", output, extra=None):
     """Render one Dockerfile and write it to `output`. Returns the path written."""
     bundle_list = bundles if isinstance(bundles, list) else \
         [b.strip() for b in bundles.split(",")]
@@ -111,7 +120,7 @@ def render_dockerfile(config, *, distro, bundles, features=(), template=None,
     template_name = template or f"Dockerfile.{distro}.j2"
     tmpl = env.get_template(template_name)
 
-    rendered = tmpl.render(
+    render_vars = dict(
         base_image=base_image,
         packages=packages,
         features=feature_list,
@@ -119,6 +128,8 @@ def render_dockerfile(config, *, distro, bundles, features=(), template=None,
         variant=variant,
         builder_image=config.get("containerdisk_builder_image", ""),
     )
+    render_vars.update(extra or {})
+    rendered = tmpl.render(**render_vars)
 
     os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
     with open(output, "w") as f:
@@ -175,6 +186,24 @@ def gen_nvmetcli(config, distro):
                               output=f"nvmetcli/Dockerfile.{distro}")
 
 
+def gen_cross(config, distro, arch):
+    cross = config["cross_arches"][distro][arch]
+    packages = build_package_list(config, distro, ["cross"]) + cross["packages"]
+    return render_dockerfile(
+        config, distro=distro, bundles=["cross"],
+        template=f"Dockerfile.{distro}-cross.j2",
+        extra={"arch": arch, "dpkg_arch": cross["dpkg_arch"], "packages": packages},
+        output=f"main/Dockerfile.{distro}.{arch}")
+
+
+def cross_jobs(arch_filter=None):
+    for distro, arches in CROSS_TARGETS.items():
+        for arch in arches:
+            if arch_filter and arch != arch_filter:
+                continue
+            yield distro, arch
+
+
 def gen_containerdisk(config, distro, variant):
     bundles = [variant] + CONTAINERDISK_EXTRA_BUNDLES
     return render_dockerfile(
@@ -221,6 +250,10 @@ def cmd_generate(args):
                 continue
             gen_nvmetcli(config, d)
 
+    if target in ("all", "cross"):
+        for cross_distro, arch in cross_jobs(args.arch):
+            gen_cross(config, cross_distro, arch)
+
     if target in ("all", "containerdisk"):
         for variant, d in containerdisk_jobs(args.variant, distro):
             gen_containerdisk(config, d, variant)
@@ -262,6 +295,16 @@ def cmd_build(args):
                 gen_nvmetcli(config, d)
             docker_build(docker_cmd, f"nvmetcli/Dockerfile.{d}", f"ci:nvmetcli-{d}")
 
+    if target == "cross":
+        jobs = list(cross_jobs(args.arch))
+        if not jobs:
+            sys.exit(f"error: no cross arch matches arch={args.arch!r}")
+        for cross_distro, arch in jobs:
+            if not args.no_generate:
+                gen_cross(config, cross_distro, arch)
+            docker_build(docker_cmd, f"main/Dockerfile.{cross_distro}.{arch}",
+                         f"ci:{cross_distro}-cross-{arch}")
+
     if target == "containerdisk":
         jobs = list(containerdisk_jobs(args.variant, distro))
         if not jobs:
@@ -283,7 +326,7 @@ def cmd_build(args):
 # ----------------------------------------------------------------------
 
 def cmd_all(args):
-    gen_args = argparse.Namespace(target="all", distro=None, variant=None)
+    gen_args = argparse.Namespace(target="all", distro=None, variant=None, arch=None)
     cmd_generate(gen_args)
 
     build_args = argparse.Namespace(target="all", distro=None, variant=None,
@@ -315,6 +358,9 @@ def cmd_smoke(args):
             if args.distro and d != args.distro:
                 continue
             gen_main(config, d)
+        if not args.distro:
+            for cross_distro, arch in cross_jobs():
+                gen_cross(config, cross_distro, arch)
 
     dockerfiles = sorted(glob.glob("main/Dockerfile.*"))
     if args.distro:
@@ -367,6 +413,9 @@ def add_target_args(p, targets, default="all", variant_help=None):
                     help=variant_help or
                          "Restrict to one containerDisk variant "
                          "(only meaningful with --target containerdisk)")
+    p.add_argument("--arch", choices=CROSS_ARCHES, default=None,
+                    help="Restrict to one cross-compile arch "
+                         "(only meaningful with --target cross)")
 
 
 def build_parser():
@@ -378,12 +427,12 @@ def build_parser():
 
     p_generate = sub.add_parser(
         "generate", help="Render Dockerfiles from ci-containers.yaml + templates/")
-    add_target_args(p_generate, ["all", "main", "staging", "nvmetcli", "containerdisk"])
+    add_target_args(p_generate, ["all", "main", "staging", "nvmetcli", "cross", "containerdisk"])
     p_generate.set_defaults(func=cmd_generate)
 
     p_build = sub.add_parser(
         "build", help="Generate (unless --no-generate) then docker-build images")
-    add_target_args(p_build, ["all", "main", "staging", "nvmetcli", "containerdisk"])
+    add_target_args(p_build, ["all", "main", "staging", "nvmetcli", "cross", "containerdisk"])
     p_build.add_argument("--docker", default=default_docker_cmd(),
                           help="Container build command (default: $DOCKER or "
                                "'sudo docker')")
