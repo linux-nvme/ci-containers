@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2026 SUSE LLC
+#
+# Author: Daniel Wagner <dwagner@suse.de>
+---
+name: "apt-get install (with retry)"
+description: >
+  Installs apt packages on a GitHub-hosted runner, working around
+  actions/runner-images#11382: background apt-daily timers can hold the
+  dpkg/apt lock and hang `apt-get update` indefinitely. Stops those timers
+  first, then bounds each apt-get call with a timeout and retries a few
+  times with lock cleanup in between.
+inputs:
+  packages:
+    description: "Space separated list of packages to install"
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: apt-get update && install
+      shell: bash
+      run: |
+        set -uo pipefail
+
+        # Background apt jobs hold the dpkg/apt lock and are the usual cause
+        # of a hung `apt-get update` on hosted runners; stop them up front.
+        sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer \
+            unattended-upgrades.service 2>/dev/null || true
+        sudo systemctl kill --kill-who=all apt-daily.service \
+            apt-daily-upgrade.service 2>/dev/null || true
+
+        attempts=3
+        for attempt in $(seq 1 "${attempts}"); do
+          if sudo timeout 240 apt-get update -qq && \
+             sudo timeout 240 apt-get install -y --no-install-recommends \
+                 ${{ inputs.packages }}; then
+            exit 0
+          fi
+
+          echo "::warning::apt-get attempt ${attempt}/${attempts} failed or hung, cleaning up and retrying" >&2
+          sudo pkill -9 -f '(apt-get|dpkg)' 2>/dev/null || true
+          sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock \
+              /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend
+          sudo dpkg --configure -a 2>/dev/null || true
+          sleep 5
+        done
+
+        echo "::error::apt-get install failed after ${attempts} attempts" >&2
+        exit 1

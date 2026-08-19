@@ -56,9 +56,9 @@ jobs:
           fi
 
       - name: Install generate dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+        uses: ./.github/actions/apt-install
+        with:
+          packages: python3-yaml python3-jinja2
 
       - name: Generate staging Dockerfile
         run: ./generate generate --target staging --distro ${{ matrix.distro }}
@@ -145,9 +145,9 @@ jobs:
           path: bin
 
       - name: Install generate dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+        uses: ./.github/actions/apt-install
+        with:
+          packages: python3-yaml python3-jinja2
 
       - name: Generate main Dockerfile
         run: ./generate generate --target main --distro ${{ matrix.distro }}
@@ -246,9 +246,9 @@ jobs:
           fi
 
       - name: Install generate dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+        uses: ./.github/actions/apt-install
+        with:
+          packages: python3-yaml python3-jinja2
 
       - name: Generate nvmetcli Dockerfile
         run: ./generate generate --target nvmetcli --distro ${{ matrix.distro }}
@@ -308,10 +308,9 @@ jobs:
           fi
 
       - name: Install libguestfs tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            guestfs-tools guestmount python3-yaml python3-jinja2
+        uses: ./.github/actions/apt-install
+        with:
+          packages: guestfs-tools guestmount python3-yaml python3-jinja2
 
       - name: Generate ${{ matrix.variant }} containerDisk Dockerfile
         run: ./generate generate --target containerdisk --variant ${{ matrix.variant }} --distro ${{ matrix.distro }}
