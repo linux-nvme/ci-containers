@@ -1,2 +1,20 @@
 nvmetcli/build/
 blktests/build/
+
+# Rendered by ./generate from ci-containers.yaml + templates/*.j2 — transient,
+# not checked in. (main/Dockerfile.ubuntu.* are hand-written and stay tracked.)
+main/Dockerfile.debian
+main/Dockerfile.fedora
+main/Dockerfile.tumbleweed
+main/Dockerfile.alpine
+staging/Dockerfile.debian
+staging/Dockerfile.fedora
+staging/Dockerfile.tumbleweed
+staging/Dockerfile.alpine
+nvmetcli/Dockerfile.debian
+nvmetcli/Dockerfile.fedora
+nvmetcli/Dockerfile.tumbleweed
+nvmetcli/Dockerfile.debian.containerdisk
+nvmetcli/Dockerfile.fedora.containerdisk
+nvmetcli/Dockerfile.tumbleweed.containerdisk
+blktests/Dockerfile.fedora.containerdisk

@@ -55,6 +55,14 @@ jobs:
             echo "RELEASE_VERSION=" >> $GITHUB_ENV
           fi
 
+      - name: Install generate dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+
+      - name: Generate staging Dockerfile
+        run: ./generate generate --target staging --distro ${{ matrix.distro }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
@@ -134,6 +142,14 @@ jobs:
         with:
           name: samu-muon-${{ matrix.distro }}
           path: bin
+
+      - name: Install generate dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+
+      - name: Generate main Dockerfile
+        run: ./generate generate --target main --distro ${{ matrix.distro }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
@@ -228,6 +244,14 @@ jobs:
             echo "RELEASE_VERSION=" >> $GITHUB_ENV
           fi
 
+      - name: Install generate dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-yaml python3-jinja2
+
+      - name: Generate nvmetcli Dockerfile
+        run: ./generate generate --target nvmetcli --distro ${{ matrix.distro }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
@@ -286,7 +310,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            guestfs-tools guestmount python3-yaml
+            guestfs-tools guestmount python3-yaml python3-jinja2
+
+      - name: Generate ${{ matrix.variant }} containerDisk Dockerfile
+        run: ./generate generate --target containerdisk --variant ${{ matrix.variant }} --distro ${{ matrix.distro }}
 
       - name: Inject ${{ matrix.variant }} tools into the base cloud image
         run: scripts/build-containerdisk.sh ${{ matrix.distro }} ${{ matrix.variant }}
