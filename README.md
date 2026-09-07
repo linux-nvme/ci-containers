@@ -31,7 +31,11 @@ The rendered Dockerfiles under `main/`, `staging/`, `nvmetcli/`, etc. are
 right before it's built, so they can never go stale relative to
 `ci-containers.yaml`. Run `./generate generate` locally to render them into
 your working tree before building by hand.
-(`main/Dockerfile.ubuntu.{armhf,ppc64le,s390x}` are the Ubuntu cross-compile
-containers, rendered from `templates/Dockerfile.ubuntu-cross.j2` and the
-`cross_arches`/`bundles.cross` entries in `ci-containers.yaml`, same as
-everything else under `main/`.)
+(`main/Dockerfile.ubuntu.{armhf,ppc64le,s390x,i386}` are the Ubuntu
+cross-compile containers, rendered from `templates/Dockerfile.ubuntu-cross.j2`
+and the `cross_arches`/`bundles.cross` entries in `ci-containers.yaml`, same
+as everything else under `main/`. `i386` is the odd one out: it builds via
+`gcc-multilib` rather than a separate cross-gcc, and needs no
+`qemu-user-static` since 32-bit x86 binaries run natively on the amd64 build
+host — it exists to keep 32-bit `long`/`time_t` truncation bugs (e.g. the
+openSUSE i586 `shr_format_ts()` bug) covered in CI.)

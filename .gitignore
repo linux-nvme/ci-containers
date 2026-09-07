@@ -10,6 +10,7 @@ main/Dockerfile.alpine
 main/Dockerfile.ubuntu.armhf
 main/Dockerfile.ubuntu.ppc64le
 main/Dockerfile.ubuntu.s390x
+main/Dockerfile.ubuntu.i386
 staging/Dockerfile.debian
 staging/Dockerfile.fedora
 staging/Dockerfile.tumbleweed

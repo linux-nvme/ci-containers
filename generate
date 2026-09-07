@@ -50,7 +50,7 @@ NVMETCLI_DISTROS = ["debian", "fedora", "tumbleweed"]
 # (plus its cross_arches/bundles.cross entries in ci-containers.yaml and a
 # templates/Dockerfile.<distro>-cross.j2) to cross-build from it too.
 CROSS_TARGETS = {
-    "ubuntu": ["armhf", "ppc64le", "s390x"],
+    "ubuntu": ["armhf", "ppc64le", "s390x", "i386"],
 }
 # Flat, deduplicated arch list across every cross distro, for --arch choices.
 CROSS_ARCHES = sorted({arch for arches in CROSS_TARGETS.values() for arch in arches})
@@ -192,7 +192,8 @@ def gen_cross(config, distro, arch):
     return render_dockerfile(
         config, distro=distro, bundles=["cross"],
         template=f"Dockerfile.{distro}-cross.j2",
-        extra={"arch": arch, "dpkg_arch": cross["dpkg_arch"], "packages": packages},
+        extra={"arch": arch, "dpkg_arch": cross["dpkg_arch"],
+               "apt_repo": cross["apt_repo"], "packages": packages},
         output=f"main/Dockerfile.{distro}.{arch}")
 
 
