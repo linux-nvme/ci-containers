@@ -17,6 +17,14 @@ containerdisk_base_images:
   fedora: "quay.io/containerdisks/fedora:44"
   tumbleweed: "quay.io/containerdisks/opensuse-tumbleweed:1.0.0"
 
+freebsd_images:
+  freebsd:
+    version: "15.1-RELEASE"
+    arch: "amd64"
+    vmfs: "ufs"
+    mirror: "https://download.freebsd.org/releases/VM-IMAGES"
+    sha512: "bea82b91a983a20eb7ecdc6f11c1006d394ebbc5668b7f0ecdecf5a54fc5f9ea3a8384fc9f74a6611a9b08c183fa953327147ebfaa0de199fd015e67dd1e608a"
+
 # Cross-compile containers (main/Dockerfile.<distro>.<arch>), one map per
 # base distro so another distro can be added later alongside "ubuntu"
 # without reshaping this. For each arch: the dpkg foreign-architecture name

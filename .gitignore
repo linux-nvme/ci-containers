@@ -22,3 +22,4 @@ nvmetcli/Dockerfile.debian.containerdisk
 nvmetcli/Dockerfile.fedora.containerdisk
 nvmetcli/Dockerfile.tumbleweed.containerdisk
 blktests/Dockerfile.fedora.containerdisk
+blktests/Dockerfile.freebsd.containerdisk
