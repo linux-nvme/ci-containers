@@ -303,6 +303,9 @@ jobs:
             distro: tumbleweed
           - variant: blktests
             distro: fedora
+          - variant: blktests
+            distro: freebsd
+            foreign: true
 
     name: Deploy ${{ matrix.variant }} containerDisk (${{ matrix.distro }})
     steps:
@@ -318,15 +321,27 @@ jobs:
           fi
 
       - name: Install libguestfs tools
+        if: ${{ ! matrix.foreign }}
         uses: ./.github/actions/apt-install
         with:
           packages: guestfs-tools guestmount libguestfs-xfs python3-yaml python3-jinja2
+
+      - name: Install Python deps
+        if: ${{ matrix.foreign }}
+        uses: ./.github/actions/apt-install
+        with:
+          packages: python3-yaml python3-jinja2
 
       - name: Generate ${{ matrix.variant }} containerDisk Dockerfile
         run: ./generate generate --target containerdisk --variant ${{ matrix.variant }} --distro ${{ matrix.distro }}
 
       - name: Inject ${{ matrix.variant }} tools into the base cloud image
+        if: ${{ ! matrix.foreign }}
         run: scripts/build-containerdisk.sh ${{ matrix.distro }} ${{ matrix.variant }}
+
+      - name: Fetch the released ${{ matrix.distro }} image
+        if: ${{ matrix.foreign }}
+        run: scripts/fetch-freebsd-image.sh ${{ matrix.variant }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0

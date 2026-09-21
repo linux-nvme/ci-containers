@@ -56,10 +56,11 @@ CROSS_TARGETS = {
 CROSS_ARCHES = sorted({arch for arches in CROSS_TARGETS.values() for arch in arches})
 CONTAINERDISK_VARIANTS = {
     "nvmetcli": ["debian", "fedora", "tumbleweed"],
-    "blktests": ["fedora"],
+    "blktests": ["fedora", "freebsd"],
 }
 # Tooling every KubeVirt containerDisk needs on top of its own variant bundle.
 CONTAINERDISK_EXTRA_BUNDLES = ["kubevirt-runner"]
+FOREIGN_CONTAINERDISK_DISTROS = ["freebsd"]
 
 DUMMY_TOOL_SCRIPTS = {
     "samu": "dummy samu",
@@ -110,7 +111,7 @@ def render_dockerfile(config, *, distro, bundles, features=(), template=None,
         [f.strip() for f in features.split(",") if f.strip()]
 
     packages = build_package_list(config, distro, bundle_list)
-    base_image = config[base_images][distro]
+    base_image = config[base_images][distro] if base_images else ""
 
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
@@ -206,6 +207,15 @@ def cross_jobs(arch_filter=None):
 
 
 def gen_containerdisk(config, distro, variant):
+    if distro in FOREIGN_CONTAINERDISK_DISTROS:
+        return render_dockerfile(
+            config, distro=distro, bundles=[],
+            template="Dockerfile.containerdisk.j2",
+            base_images=None, variant=variant,
+            extra={"foreign": True,
+                   "image_info": config["freebsd_images"][distro]},
+            output=f"{variant}/Dockerfile.{distro}.containerdisk")
+
     bundles = [variant] + CONTAINERDISK_EXTRA_BUNDLES
     return render_dockerfile(
         config, distro=distro, bundles=bundles,
@@ -314,10 +324,11 @@ def cmd_build(args):
         for variant, d in jobs:
             if not args.no_generate:
                 gen_containerdisk(config, d, variant)
-            # Inject the variant's tools into the base cloud image on the
-            # host, then package the resulting qcow2 as a scratch containerDisk.
-            run(["scripts/build-containerdisk.sh", d, variant],
-                env={**os.environ, "DOCKER": docker_cmd})
+            if d in FOREIGN_CONTAINERDISK_DISTROS:
+                run(["scripts/fetch-freebsd-image.sh", variant])
+            else:
+                run(["scripts/build-containerdisk.sh", d, variant],
+                    env={**os.environ, "DOCKER": docker_cmd})
             docker_build(docker_cmd, f"{variant}/Dockerfile.{d}.containerdisk",
                          f"ci:{variant}-{d}-containerdisk", f"{variant}/build")
 
@@ -382,6 +393,14 @@ def cmd_smoke(args):
 def cmd_render(args):
     config = load_config()
 
+    if args.print_freebsd:
+        entry = config["freebsd_images"][args.distro]
+        if args.print_freebsd not in entry:
+            sys.exit(f"error: freebsd_images.{args.distro} has no "
+                      f"'{args.print_freebsd}' field")
+        print(entry[args.print_freebsd])
+        return
+
     bundle_list = [f.strip() for f in args.bundles.split(",")]
     packages = build_package_list(config, args.distro, bundle_list)
     base_image = config[args.base_images][args.distro]
@@ -406,7 +425,8 @@ def cmd_render(args):
 
 def add_target_args(p, targets, default="all", variant_help=None):
     p.add_argument("--target", choices=targets, default=default)
-    p.add_argument("--distro", choices=DISTROS, default=None,
+    p.add_argument("--distro", choices=DISTROS + FOREIGN_CONTAINERDISK_DISTROS,
+                    default=None,
                     help="Restrict to one distro (default: every distro "
                          "the selected target(s) apply to)")
     p.add_argument("--variant", choices=list(CONTAINERDISK_VARIANTS),
@@ -461,9 +481,11 @@ def build_parser():
         "render", help="Render a single Dockerfile from explicit --distro/"
                         "--bundles/--template (low-level; also the default "
                         "when no subcommand is given)")
-    p_render.add_argument("--distro", required=True, choices=DISTROS)
-    p_render.add_argument("--bundles", required=True,
-                           help="Comma separated bundle list (e.g. base,python)")
+    p_render.add_argument("--distro", required=True,
+                           choices=DISTROS + FOREIGN_CONTAINERDISK_DISTROS)
+    p_render.add_argument("--bundles", default="",
+                           help="Comma separated bundle list (e.g. base,python); "
+                                "not required with --print-freebsd")
     p_render.add_argument("--features", default="",
                            help="Comma separated feature list (e.g. muon)")
     p_render.add_argument("--template", default=None,
@@ -480,6 +502,11 @@ def build_parser():
                                 "separated) and exit")
     p_render.add_argument("--print-base-image", action="store_true",
                            help="Print the resolved base image and exit")
+    p_render.add_argument("--print-freebsd", default=None,
+                           metavar="FIELD",
+                           help="Print one field (version, arch, vmfs, mirror, "
+                                "sha512) of the freebsd_images entry for "
+                                "--distro and exit")
     p_render.add_argument("--output", default=None)
     p_render.set_defaults(func=cmd_render)
 
