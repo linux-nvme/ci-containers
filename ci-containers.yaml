@@ -89,6 +89,8 @@ bundles:
       - libkeyutils-dev
       - libdbus-1-dev
       - liburing-dev
+      - libarchive-dev
+      - libjq-dev
     fedora:
       - clang
       - gcc
@@ -103,6 +105,8 @@ bundles:
       - keyutils-libs-devel
       - dbus-devel
       - liburing-devel
+      - libarchive-devel
+      - jq-devel
       - redhat-rpm-config
     tumbleweed:
       - clang
@@ -118,6 +122,8 @@ bundles:
       - keyutils-devel
       - dbus-1-devel
       - liburing-devel
+      - libarchive-devel
+      - libjq-devel
     alpine:
       - clang
       - gcc
