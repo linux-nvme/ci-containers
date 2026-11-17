@@ -7,14 +7,14 @@
 
 base_images:
   debian: "debian:trixie-slim"
-  fedora: "fedora:latest"
+  fedora: "fedora:45"
   tumbleweed: "opensuse/tumbleweed:latest"
   alpine: "alpine:latest"
   ubuntu: "ubuntu:noble"
 
 containerdisk_base_images:
   debian: "quay.io/containerdisks/debian:13"
-  fedora: "quay.io/containerdisks/fedora:44"
+  fedora: "quay.io/containerdisks/fedora:45"
   tumbleweed: "quay.io/containerdisks/opensuse-tumbleweed:1.0.0"
 
 freebsd_images:
